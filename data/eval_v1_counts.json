@@ -1,0 +1,90 @@
+{
+ "total": 3500,
+ "checks": {
+  "hard negatives with a scanner 'secret' hit": 0,
+  "masked PII negatives with Presidio PII rule hit": 6,
+  "positives found by our scanner (credential)": 233,
+  "positives found by our scanner (pii)": 176
+ },
+ "aegis": {
+  "train rows": 25007,
+  "after filters and dedup": 8720,
+  "dropped by scanners": 78
+ },
+ "wildchat_pool": {
+  "rows": 837989,
+  "after_length_cap": 142088,
+  "clean_pool": 133338
+ },
+ "wildchat_drawn": 3400,
+ "wildchat_flagged": {
+  "moderation>0.02": 665,
+  "presidio:name_with_place_date_or_contact": 359,
+  "detect-secrets:Base64 High Entropy String": 2,
+  "detect-secrets:Hex High Entropy String": 1,
+  "presidio:PHONE_NUMBER": 1,
+  "presidio:US_DRIVER_LICENSE": 2
+ },
+ "wildchat_flagged_n": 1027,
+ "manual_drop": [],
+ "frames": {
+  "('credential', 'password', 'kept')": 102,
+  "('credential', 'password', 'dropped')": 12,
+  "('credential', 'api_key', 'kept')": 107,
+  "('credential', 'api_key', 'dropped')": 12,
+  "('credential', 'api_key', 'duplicate')": 1,
+  "('credential', 'pin', 'kept')": 63,
+  "('credential', 'pin', 'dropped')": 1,
+  "('credential', 'card', 'kept')": 58,
+  "('credential', 'card', 'dropped')": 5,
+  "('credential', 'card', 'duplicate')": 1,
+  "('credential', 'bank', 'kept')": 59,
+  "('credential', 'bank', 'dropped')": 5,
+  "('credential', 'db_conn', 'kept')": 104,
+  "('credential', 'db_conn', 'dropped')": 7,
+  "('credential', 'db_conn', 'duplicate')": 1,
+  "('pii', 'name_phone', 'kept')": 76,
+  "('pii', 'name_phone', 'dropped')": 2,
+  "('pii', 'name_phone', 'duplicate')": 2,
+  "('pii', 'name_email', 'kept')": 77,
+  "('pii', 'name_email', 'dropped')": 3,
+  "('pii', 'name_address', 'kept')": 77,
+  "('pii', 'name_address', 'dropped')": 1,
+  "('pii', 'name_address', 'duplicate')": 2,
+  "('pii', 'name_ssn', 'kept')": 44,
+  "('pii', 'name_passport', 'kept')": 31,
+  "('pii', 'name_ssn', 'dropped')": 2,
+  "('pii', 'name_ssn', 'duplicate')": 2,
+  "('pii', 'name_passport', 'dropped')": 1,
+  "('pii', 'name_dob_mrn', 'kept')": 68,
+  "('pii', 'name_dob_mrn', 'duplicate')": 8,
+  "('pii', 'name_dob_mrn', 'dropped')": 4,
+  "('pii', 'talk', 'kept')": 161,
+  "('pii', 'talk', 'dropped')": 1,
+  "('credential', 'talk', 'kept')": 158,
+  "('credential', 'talk', 'dropped')": 2
+ },
+ "generator": [
+  "nvidia/nemotron-3-ultra-550b-a55b:free"
+ ],
+ "generator_dates": [
+  "2026-10-29",
+  "2026-10-30"
+ ],
+ "by_group_split": {
+  "credential|test": 348,
+  "credential_hn|test": 348,
+  "credential|validation": 152,
+  "credential_hn|validation": 152,
+  "pii|test": 348,
+  "pii_hn|test": 348,
+  "pii|validation": 152,
+  "pii_hn|validation": 152,
+  "clean|test": 348,
+  "clean|validation": 152,
+  "harmful|test": 348,
+  "harmful|validation": 152,
+  "harmful_safe|validation": 152,
+  "harmful_safe|test": 348
+ }
+}
