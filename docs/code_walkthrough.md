@@ -13,7 +13,8 @@ This file explains the whole experiment in order: the problem, the data sources,
 | 6 | Regex gate and local detectors | `scripts/secretscan.py`, `gate.py` (second half), `Gatekeeper_v1_local.ipynb` |
 | 7 | Experiments E1 to E10 | `Gatekeeper_v1.ipynb` |
 | 8 | Final gates, cost by risky share, limits | `Gatekeeper_v1.ipynb` (last sections) |
-| 9 | Earlier work: pilot set and the baseline replication | `Baseline_Experiment.ipynb` (local) |
+| 9 | Earlier work: pilot set and the baseline replication | `Baseline_Experiment.ipynb` (not in the public repo) |
+| 10 | Related work and other settings for the gate | |
 | Appendix A | Every exclusion and fallback in the code | |
 | Appendix B | Judgment calls made during the build | |
 
@@ -41,6 +42,7 @@ Test split: 2,436 records, 1,044 of them risky.
 
 - **Paper gate:** the gate from an unpublished paper (Lee, Singh & Singh). Five LLMs read the user's message with a prompt about harmful or manipulative prompts (prompt A); 3 of 5 must say True. It was built for harmful prompts.
 - **Gate v1:** regex scanner, then `gpt-6-luna` with one question for PII and one for credentials, and Jev for harmful content.
+- **Jev:** a model from TypeSafe that returns the probability that a statement about the text is true. **Regex scanner:** text patterns for vendor key formats, card numbers, emails, phone numbers and SSNs (Part 6).
 - **Gate v2:** tools on the device first (regex, Presidio, GLiNER-PII, detect-secrets, Granite Guardian). Records they flag are blocked and never leave the device. The rest get v1's questions.
 - **Cost** = (false positives + r × misses) / records. A miss costs r times a false positive.
 
@@ -82,11 +84,11 @@ API keys go in `.env` (`OPENROUTER_API_KEY`, `TYPESAFE_API_KEY`).
 | Date (2026) | Step |
 |---|---|
 | 10-02 | Source datasets checked row by row; WildChat secret scan; pilot set built |
-| 10-21 | Scanner fixed after the user's read of its hits; WildChat rescanned (376 distinct secret-like values) |
+| 10-21 | Scanner fixed after a hand read of its hits; WildChat rescanned (376 distinct secret-like values) |
 | 10-22, 10-23 | Pilot model run (prompt A and our first prompt, 288 records) |
 | 10-28 | Baseline replicated on WildJailbreak with today's models (Part 9) |
 | 10-29, 10-30 | Eval set v1 built (3,500 records); all API and local runs; experiments E1 to E10 |
-| 10-30 | User decisions: r = 4 leads, r = 25 second; harmful reported apart and kept in the final gates. Experiments closed |
+| 10-30 | Decisions: r = 4 leads, r = 25 second; harmful reported apart and kept in the final gates. Experiments closed |
 | 11-02 | Invalid answers now count as block (fail-closed); cost by risky share added |
 | 11-06 | Code cleanup with no change in any score; summary ladder over all three risks added to `Gatekeeper_v1.ipynb` |
 
@@ -467,7 +469,7 @@ def talk_ok(t):
 - `full_name`: Presidio finds a person name of two or more words with score 0.7 or more.
 - `talk_ok`: a talk frame must hold no value. A slot, a scanner hit, a run of 4 or more digits, a well-known fake identity, a full name or a Presidio ID each drop it.
 
-Result: 1,260 messages, 1,185 kept after the checks (866 frames: 493 credential, 373 PII; 319 talk messages), 1,103 used in records. Each frame is used at most 2 times (credential) or 3 times (PII). `out/frames_all.md` (local) lists every frame with its use count.
+Result: 1,260 messages, 1,185 kept after the checks (866 frames: 493 credential, 373 PII; 319 talk messages), 1,103 used in records. Each frame is used at most 2 times (credential) or 3 times (PII).
 
 ## 2-2. All randomness in one place: `Values`
 
@@ -1044,7 +1046,7 @@ Before building, every message of WildChat-1M (3,920,148 messages in 14 files) w
 - Conversations with a placeholder-like value: 3,500 (0.42%). With an email, phone or SSN pattern: 2,834 (0.34%).
 - Hits by kind (messages): `key = value` assignment 687, Hugging Face token 426, Telegram bot token 360, connection string with password 50, OpenAI key 126, Google API key 96, JWT 73, AWS access key 9, private-key header 5, Stripe key 3.
 - Only masked values are written to the hits file. Raw values are kept only as SHA-256 hashes, used in 2-3 so that no generated value equals a real one.
-- The scanner was fixed on 2026-10-21 after the user read its hits (code references and non-ASCII prose skipped; constant names, self-named values and example domains counted as placeholders). The numbers above are from the rerun.
+- The scanner was fixed on 2026-10-21 after a hand read of its hits (code references and non-ASCII prose skipped; constant names, self-named values and example domains counted as placeholders). The numbers above are from the rerun.
 - These are candidate counts. How many are real secrets was not checked by hand.
 
 ## 3-3. Collecting clean candidates from WildChat
@@ -1755,7 +1757,7 @@ def scan(text):
 ```
 
 - Runs all 16 patterns and yields (kind, value, state) for each hit.
-- **Code references are skipped:** `passwordInput.getText()`, `request.POST[`, `config.password` read a value from somewhere else and are not values. Non-ASCII values (prose in other languages) are skipped too. Added after the user found such false hits on 2026-10-20.
+- **Code references are skipped:** `passwordInput.getText()`, `request.POST[`, `config.password` read a value from somewhere else and are not values. Non-ASCII values (prose in other languages) are skipped too. Added on 2026-10-20, after such false hits were found in a hand read.
 - **PII kinds:** `placeholder` on reserved example domains (`@example.com`), else `pii`.
 - **Secret kinds:** `placeholder` if it looks like one; low-entropy `generic_assign` skipped; else `secret`.
 
@@ -1910,7 +1912,7 @@ def granite_fn(text):
 - IBM's safety model. It answers Yes or No to "is this harmful (harm)?".
 - Only the scores of the **first answer token** are read; nothing is generated. The scores of `Yes`, `yes`, `No`, `no` become probabilities; Yes at 0.5 or more means harmful.
 - Runs in float16 on the Mac's GPU (MPS): about 1.9 seconds per record, 6,747 seconds for 3,500 records. bfloat16 took 2.3 to 4.6 seconds per record; its first 258 answers were deleted and the whole set rerun in float16, so all answers come from one setting.
-- The plan was Llama Guard 3 1B. Its download is gated behind a licence acceptance and login, which is the user's call, so the ungated Granite Guardian was used.
+- The plan was Llama Guard 3 1B. Its download is gated behind a licence acceptance and login. The licence was not accepted, and the ungated Granite Guardian was used.
 - The gliner install upgraded transformers from 4.47.1 to 5.16.1. Granite Guardian needed one change for it (`return_dict=True`).
 
 ---
@@ -2102,7 +2104,7 @@ Every gate built so far (several hundred settings) is a candidate. For each r th
 
 ## E9. Main view: PII and credential only
 
-User decision of 2026-10-30: the paper leads with PII and credentials; harmful is reported apart.
+Decision of 2026-10-30: the paper leads with PII and credentials; harmful is reported apart.
 - Label `exposure` = pii or credential. Aegis records are left out (validation 760, test 1,740 records; 696 risky in test).
 - Each per-risk gate enters with its PII and credential parts only; API cost counts only the prompts it reads.
 
@@ -2349,6 +2351,117 @@ To check that the paper gate works as described on its own task:
 - Provider refusals counted as harmful: Gemini 18, Haiku 24.
 
 So the paper gate reproduces on harmful prompts. On the record-level task with PII and credentials, the same gate stores 65% of risky records (E1).
+
+---
+
+# Part 10. Related work and other settings
+
+Each work below was checked against its proceedings, publisher or arXiv page on 2026-11-06.
+
+## 10-1. Safety guard models
+
+| Work | What it does | Reads | How it differs from this work |
+|---|---|---|---|
+| Llama Guard (Inan et al., 2023, arXiv:2312.06674) | Llama 2 7B tuned to label prompts and responses against a risk taxonomy | prompt, response | Harm categories only. No credential category; no test of values against look-alikes |
+| NeMo Guardrails (Rebedea et al., EMNLP 2023 demo) | Toolkit of programmable input, dialog and output rails | each turn | A framework with no fixed detector or test set for PII or credentials |
+| WildGuard (Han et al., NeurIPS 2024 D&B) | Open moderation model for harmful prompts, harmful responses and refusals | prompt, response | Privacy is one harm category. Decision is per chat turn, with no storage cost |
+| ShieldGemma (Zeng et al., 2024, arXiv:2407.21772) | Gemma 2 moderation models, 2B to 27B, four harm types | prompt, response | No PII or credential types |
+| Granite Guardian (Padhi et al., 2024, arXiv:2412.07724) | Risk detection models (2B, 8B) for harm, bias, jailbreak and RAG hallucination | prompt, response | No PII or credential risks. Used here as the on-device harmful detector |
+| Aegis 2.0 (Ghosh et al., NAACL 2025) | Safety dataset, 12 core hazard categories, labels from humans and an LLM jury | prompt, response | PII/Privacy is a harm category. Used here as the source of the harmful groups |
+| Baseline gate (Lee, Singh & Singh, unpublished) | 5-LLM vote on whether a prompt is harmful or manipulative | prompt | Same storage goal. Reads the prompt only and asks about harm only |
+
+## 10-2. PII and secrets in LLM use
+
+| Work | What it shows | How it differs from this work |
+|---|---|---|
+| WildChat (Zhao et al., ICLR 2024) | 1M real ChatGPT conversations, released for research | Source of our safe chats. PII masked by Presidio only |
+| Trust No Bot (Mireshghallah et al., COLM 2024) | Users share PII with chatbots, often in translation (48%) and code editing (16%) | Measures disclosure; builds no gate |
+| PAPILLON / PUPA (Li et al., NAACL 2025) | A local model rewrites a query before a cloud model sees it; 7.5% leakage | Protects the query to the API. Same local-first idea as gate v2 |
+| Extracting training data (Carlini et al., USENIX Security 2021) | GPT-2 gives back names, phones and emails seen once in training | Leakage from model weights; ours is leakage into a record |
+| PII leakage in LMs (Lukas et al., IEEE S&P 2023) | Extraction attacks; DP training still leaks about 3% of PII | Same: leakage from the model |
+| How Bad Can It Git? (Meli et al., NDSS 2019) | Secrets leak in over 100,000 GitHub repositories; removed secrets stay in history | Same permanence problem, in git. Code files, not chats |
+| SecretBench (Basak et al., MSR 2023) | 97,479 candidate secrets, 15,084 true, hand-labeled | Detector benchmark for code; no PII or harmful content |
+| Code completion memorizes credentials (Huang et al., FSE 2024) | Code assistants emit hard-coded credentials from training data | Model output leaks; ours checks the chat before storage |
+| WildCode Revisited (2025, arXiv:2512.04259) | 111 chat logs with real API secrets after a hand read | Finds secrets in chat logs; builds no gate |
+| PII in education data (arXiv:2501.09765, 2025) | Fine-tuned GPT-4o-mini finds PII with recall above 0.95 | PII only. Source of our r = 25 weight |
+| Philter (Norgeot et al., npj Digital Medicine 2020) | Open-source PHI removal for clinical notes, built for high recall | Clinical notes, PII only, no chats |
+| GLiNER (Zaratiana et al., NAACL 2024) | Small encoder that finds spans for any list of entity types | A detector. Its PII model is one of our local tools |
+
+## 10-3. Blockchain, agents and logging
+
+| Work | What it shows | How it differs from this work |
+|---|---|---|
+| Arbitrary content on Bitcoin (Matzutt et al., FC 2018) | Over 1,600 files on Bitcoin, some of them illegal content that every node then holds | Shows the harm after storage; we block before storage |
+| Redactable blockchain (Ateniese et al., IEEE EuroS&P 2017) | Chameleon hashes let a trusted party rewrite blocks | Fixes it afterwards and needs trust; a gate keeps the chain unchanged |
+| Blockchain and the GDPR (Finck, European Parliament study, 2019) | How "erasure" applies to blockchains is unclear; data kept off-chain can be deleted | Legal view. A gate decides what stays off-chain |
+| Decentralizing privacy (Zyskind et al., IEEE SPW 2015) | Blockchain for access control, personal data kept off-chain | Assumes the right data goes off-chain; no check of content |
+| MedRec (Azaria et al., OBD 2016) | Medical record permissions on a blockchain, raw data off-chain | Same healthcare setting; no content filter |
+| Blockchain for LLM security (Geren et al., SIGKDD Explorations 2024) | Survey of blockchain uses for LLM security and safety | Survey; no gate is tested |
+| Black box for agentic processes (Brömme, 2026, arXiv:2609.04017) | Anchors hashes of agent messages and tool calls on a blockchain | Architecture with no evaluation; content stays off-chain by design |
+| PrivacyLens (Shao et al., NeurIPS 2024 D&B) | LM agents leak private data in 26% to 39% of cases | Agent actions; no storage step |
+| AgentDojo (Debenedetti et al., NeurIPS 2024 D&B) | 97 agent tasks, 629 prompt-injection tests | Attacks on agents; no PII or credential check |
+| EU AI Act, Article 12 (Regulation (EU) 2024/1689) | High-risk AI systems must log events automatically | Logs must be kept; a gate decides what a permanent log may hold |
+| Cost-sensitive learning (Elkan, IJCAI 2001) | Optimal decision under unequal error costs | Source of the cut p* = 1/(1+r) |
+| WildJailbreak (Jiang et al., NeurIPS 2024) | 262K vanilla and adversarial prompts, harmful and benign | Used only to replicate the baseline gate (Part 9) |
+
+## 10-4. What this work adds
+
+| | Guard models | PII and secret detectors | Blockchain privacy work | This work |
+|---|---|---|---|---|
+| Reads prompt and answer together | yes | one text | no | yes |
+| PII, credentials and harmful content in one gate | harmful only | one kind each | no | yes |
+| Real value against look-alike, in pairs | no | partly | no | yes |
+| Cost that weighs a permanent miss | no | recall-weighted F scores | no | r from 1 to 1,000+ |
+| Risky share of real traffic | no | no | no | yes |
+| Risky records kept on the device | no | PAPILLON | off-chain storage | 88.8% |
+
+"partly": SecretBench labels placeholders among candidate secrets; Philter and the education work score recall on real PII.
+
+## 10-5. Other settings for the gate
+
+| Setting | Permanent or shared record | What the gate keeps out |
+|---|---|---|
+| Healthcare | Patient and staff chats with an AI assistant, audit trails (HIPAA) | Patient names with MRN, date of birth, contact details |
+| Finance | Broker and advisor chat records kept in non-rewriteable, non-erasable storage (SEC Rule 17a-4) | Card and account numbers, client identities |
+| AI agents | Logs of agent messages and tool calls, anchored for audit (EU AI Act Art. 12) | API keys and tokens the agent handled; user data in tool results |
+| Software development | Coding-assistant chats, commit messages, issue trackers, git history | API keys, passwords, connection strings |
+| Public chat datasets | Released corpora such as WildChat, copied and cached once out | Secrets and PII that automatic masking missed |
+| Government and courts | Public records and transparency logs | Personal data of citizens; harmful content |
+| Education | Student and tutor chat logs kept for grading or research (FERPA) | Student identities and contact details |
+| Customer support | Chat transcripts shared with vendors or used for training | Card numbers, passwords, addresses |
+
+## 10-6. References
+
+- Ateniese, G., Magri, B., Venturi, D., Andrade, E. Redactable Blockchain, or Rewriting History in Bitcoin and Friends. IEEE EuroS&P 2017.
+- Azaria, A., Ekblaw, A., Vieira, T., Lippman, A. MedRec: Using Blockchain for Medical Data Access and Permission Management. Open and Big Data (OBD) 2016.
+- Basak, S. K., Neil, L., Reaves, B., Williams, L. SecretBench: A Dataset of Software Secrets. MSR 2023. arXiv:2303.06729.
+- Brömme, A. A Black Box for Agentic Processes: Blockchain-Anchored Evidence for AI Agent Communication, Human Oversight, and GRC Audits. arXiv:2609.04017, 2026.
+- Carlini, N., et al. Extracting Training Data from Large Language Models. USENIX Security 2021.
+- Debenedetti, E., Zhang, J., Balunović, M., Beurer-Kellner, L., Fischer, M., Tramèr, F. AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents. NeurIPS 2024 Datasets and Benchmarks.
+- Elkan, C. The Foundations of Cost-Sensitive Learning. IJCAI 2001.
+- Enhancing the De-identification of Personally Identifiable Information in Educational Data. arXiv:2501.09765, 2025.
+- European Union. Regulation (EU) 2024/1689 (AI Act), Article 12: Record-keeping.
+- Finck, M. Blockchain and the General Data Protection Regulation. European Parliament, EPRS/STOA, PE 634.445, 2019.
+- Geren, C., Board, A., Dagher, G., Zhuang, J. Blockchain for Large Language Model Security and Safety: A Holistic Survey. SIGKDD Explorations 26(2), 2024. arXiv:2407.20181.
+- Ghosh, S., et al. Aegis2.0: A Diverse AI Safety Dataset and Risks Taxonomy for Alignment of LLM Guardrails. NAACL 2025.
+- Han, S., et al. WildGuard: Open One-Stop Moderation Tools for Safety Risks, Jailbreaks, and Refusals of LLMs. NeurIPS 2024 Datasets and Benchmarks. arXiv:2406.18495.
+- Huang, Y., Li, Y., Wu, W., Zhang, J., Lyu, M. R. Your Code Secret Belongs to Me: Neural Code Completion Tools Can Memorize Hard-Coded Credentials. FSE 2024. arXiv:2309.07639.
+- Inan, H., et al. Llama Guard: LLM-based Input-Output Safeguard for Human-AI Conversations. arXiv:2312.06674, 2023.
+- Jiang, L., et al. WildTeaming at Scale: From In-the-Wild Jailbreaks to (Adversarially) Safer Language Models. NeurIPS 2024. arXiv:2406.18510.
+- Li, S., Raghuram, V. C., Khattab, O., Hirschberg, J., Yu, Z. PAPILLON: Privacy Preservation from Internet-based and Local Language Model Ensembles. NAACL 2025.
+- Lukas, N., Salem, A., Sim, R., Tople, S., Wutschitz, L., Zanella-Béguelin, S. Analyzing Leakage of Personally Identifiable Information in Language Models. IEEE S&P 2023.
+- Matzutt, R., et al. A Quantitative Analysis of the Impact of Arbitrary Blockchain Content on Bitcoin. Financial Cryptography 2018.
+- Meli, M., McNiece, M. R., Reaves, B. How Bad Can It Git? Characterizing Secret Leakage in Public GitHub Repositories. NDSS 2019.
+- Mireshghallah, N., Antoniak, M., More, Y., Choi, Y., Farnadi, G. Trust No Bot: Discovering Personal Disclosures in Human-LLM Conversations in the Wild. COLM 2024. arXiv:2407.11438.
+- Norgeot, B., et al. Protected Health Information filter (Philter): accurately and securely de-identifying free-text clinical notes. npj Digital Medicine 3:57, 2020.
+- Padhi, I., et al. Granite Guardian. arXiv:2412.07724, 2024.
+- Rebedea, T., Dinu, R., Sreedhar, M. N., Parisien, C., Cohen, J. NeMo Guardrails: A Toolkit for Controllable and Safe LLM Applications with Programmable Rails. EMNLP 2023 System Demonstrations.
+- Shao, Y., Li, T., Shi, W., Liu, Y., Yang, D. PrivacyLens: Evaluating Privacy Norm Awareness of Language Models in Action. NeurIPS 2024 Datasets and Benchmarks.
+- WildCode Revisited: A Comprehensive Empirical Study on the Security of LLM-Generated Code. arXiv:2512.04259, 2025.
+- Zaratiana, U., Tomeh, N., Holat, P., Charnois, T. GLiNER: Generalist Model for Named Entity Recognition using Bidirectional Transformer. NAACL 2024.
+- Zeng, W., et al. ShieldGemma: Generative AI Content Moderation Based on Gemma. arXiv:2407.21772, 2024.
+- Zhao, W., Ren, X., Hessel, J., Cardie, C., Choi, Y., Deng, Y. WildChat: 1M ChatGPT Interaction Logs in the Wild. ICLR 2024.
+- Zyskind, G., Nathan, O., Pentland, A. Decentralizing Privacy: Using Blockchain to Protect Personal Data. IEEE Security and Privacy Workshops 2015.
 
 ---
 

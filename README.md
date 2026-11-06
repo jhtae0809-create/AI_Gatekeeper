@@ -2,7 +2,7 @@
 
 Experiments on a gatekeeper that decides whether an LLM prompt and answer record is safe to keep permanently before it is anchored on a blockchain. A record is risky if it holds personal information (PII), a credential, or harmful content.
 
-Full write-up of every step, decision and result: [docs/code_walkthrough.md](docs/code_walkthrough.md).
+Full write-up of every step, decision and result: [docs/code_walkthrough.md](docs/code_walkthrough.md). Korean translation, for reference: [docs/code_walkthrough.ko.md](docs/code_walkthrough.ko.md).
 
 ## Results (test split, 2,436 records, 1,044 risky)
 
