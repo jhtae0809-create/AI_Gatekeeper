@@ -882,6 +882,71 @@
    "McNemar vs paper (b, c, p)": "696, 348, 2.2e-27"
   }
  },
+ "LADDER": {
+  "paper gate": {
+   "recall": 0.352,
+   "fp_rate": 0.078,
+   "recall_pii": 0.052,
+   "recall_credential": 0.181,
+   "recall_harmful": 0.822,
+   "cost_r4": 1.156,
+   "cost_r25": 6.992
+  },
+  "+ whole record and definitions (B1, 3-of-5 vote)": {
+   "recall": 0.829,
+   "fp_rate": 0.09,
+   "recall_pii": 0.954,
+   "recall_credential": 0.908,
+   "recall_harmful": 0.624,
+   "cost_r4": 0.345,
+   "cost_r25": 1.888
+  },
+  "+ one model (gpt-6-luna)": {
+   "recall": 0.927,
+   "fp_rate": 0.117,
+   "recall_pii": 0.971,
+   "recall_credential": 0.983,
+   "recall_harmful": 0.828,
+   "cost_r4": 0.192,
+   "cost_r25": 0.847
+  },
+  "+ one question per risk": {
+   "recall": 0.909,
+   "fp_rate": 0.188,
+   "recall_pii": 0.968,
+   "recall_credential": 0.994,
+   "recall_harmful": 0.764,
+   "cost_r4": 0.264,
+   "cost_r25": 1.083
+  },
+  "+ regex first": {
+   "recall": 0.916,
+   "fp_rate": 0.188,
+   "recall_pii": 0.989,
+   "recall_credential": 0.994,
+   "recall_harmful": 0.764,
+   "cost_r4": 0.252,
+   "cost_r25": 1.011
+  },
+  "+ Jev for harmful (gate v1)": {
+   "recall": 0.955,
+   "fp_rate": 0.127,
+   "recall_pii": 0.98,
+   "recall_credential": 0.989,
+   "recall_harmful": 0.897,
+   "cost_r4": 0.15,
+   "cost_r25": 0.555
+  },
+  "regex alone": {
+   "recall": 0.282,
+   "fp_rate": 0.01,
+   "recall_pii": 0.368,
+   "recall_credential": 0.477,
+   "recall_harmful": 0.0,
+   "cost_r4": 1.237,
+   "cost_r25": 7.703
+  }
+ },
  "CURVE_RATES": {
   "paper gate": {
    "FNR": 0.6484674329501916,

@@ -2,6 +2,8 @@
 
 Experiments on a gatekeeper that decides whether an LLM prompt and answer record is safe to keep permanently before it is anchored on a blockchain. A record is risky if it holds personal information (PII), a credential, or harmful content.
 
+Full write-up of every step, decision and result: [docs/code_walkthrough.md](docs/code_walkthrough.md).
+
 ## Results (test split, 2,436 records, 1,044 risky)
 
 | | Paper gate | Gate v1 | Gate v2 |
@@ -33,6 +35,7 @@ Experiments on a gatekeeper that decides whether an LLM prompt and answer record
 | `out/eval_v1_runs/scores_v1.json` | All result tables |
 | `out/eval_v1_logs/run_all.sh` | Full API runs, one process per model |
 | `out/eval_v1_logs/misses.py` | Hand-read of the errors of the main pick |
+| `docs/code_walkthrough.md` | The whole experiment explained step by step, with code, decisions and all result tables |
 
 Self-tests (no API call): `python scripts/secretscan.py`, `python scripts/gate.py`, `python scripts/build_eval.py`.
 
