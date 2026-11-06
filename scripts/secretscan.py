@@ -1,4 +1,4 @@
-"""Regex + entropy scanner for secrets and PII. A library: other code imports `scan`, `RX`, `mask`, `entropy`.
+"""Regex + entropy scanner for secrets and PII. A library: other code imports `scan`, `mask`, `luhn`.
 
 scan(text) yields (kind, value, status) for every match:
 - status "pii": email, phone, SSN.
@@ -6,14 +6,14 @@ scan(text) yields (kind, value, status) for every match:
 - status "secret": anything else. For `generic_assign` (password = ..., api_key: ...) values under 3.5 bits of entropy are skipped.
 
 Used by:
-- scan_wildchat.py, sample_scan_hits.py (whole-WildChat scan and its hand-read sample).
-- pilot_set_v2.ipynb: Step 1 filter (any hit drops a WildChat candidate), the placeholder check on generated values,
-  the frame check, PUPA email and phone replacement (`RX`), and the hard-negative check in the output cell.
+- gate.py: the regex gate of the eval v1 experiments (`scan`, `luhn`).
+- build_eval.py: the WildChat clean-pool filter, the placeholder check on generated values, the frame check and card numbers.
+- scan_wildchat.py: the whole-WildChat scan that writes the secret hashes build_eval.py avoids.
 
 Changed 2026-10-20 after the user found false hits: code references (passwordInput.getText(), request.POST[, a->b(, config.password)
 and non-ASCII values are skipped; values that name their own kind (complex_password) count as placeholders, constant names (DB_PASSWORD) and emails on reserved example domains (example.com) count as placeholders.
 
-Run `python3 secretscan.py` for the self-test (16 asserts).
+Run `python3 secretscan.py` for the self-test.
 """
 import math, re, collections
 
@@ -71,9 +71,18 @@ def scan(text):
             elif is_placeholder(v):
                 yield kind, v, "placeholder"
             elif kind == "generic_assign" and entropy(v) < 3.5:
-                continue  # low-entropy words like 'password = hunter'... ponytail: fixed 3.5 bits cutoff, tune on hand-read sample
+                continue  # shortcut: fixed 3.5-bit cutoff for words like 'password = sunflower', tune on a hand-read sample if used as a gate
             else:
                 yield kind, v, "secret"
+
+
+def luhn(d):
+    """Card-number checksum on a string of digits."""
+    s = 0
+    for i, c in enumerate(reversed(d)):
+        n = int(c) * (2 if i % 2 else 1)
+        s += n - 9 if n > 9 else n
+    return s % 10 == 0
 
 
 def mask(v):
@@ -99,4 +108,5 @@ if __name__ == "__main__":
     assert not list(scan("QString password = passwordLineEdit->text();"))
     assert t("'password': 'complex_password'") == {("generic_assign", "placeholder")}
     assert ("generic_assign", "secret") in t("password = Xk9#mQ2vLp7w")
+    assert luhn("4111111111111111") and not luhn("4111111111111112")
     print("ok")

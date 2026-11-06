@@ -10,6 +10,5 @@
 !/data/frames_v1.jsonl
 !/data/eval_v1_counts.json
 !/out/eval_v1_runs/scores_v1.json
-!/out/eval_v1_logs/make_*_nb.py
 !/out/eval_v1_logs/misses.py
 !/out/eval_v1_logs/run_all.sh

@@ -4,13 +4,13 @@ Prompts (design doc section 6), Jev questions (section 7), the run loop and scor
 the regex gate (section 8), and paired statistics. A run file holds one JSON line per record: idx, raw, pred (and cost).
 Run `python3 gate.py` for the self-test (no API calls).
 """
-import collections, json, math, os, random, re, sys
+import json, math, os, random, re, sys
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from secretscan import scan
+from secretscan import luhn, scan
 
-ROOT = "/Users/jhtae/PaperReview/Gatekeeper_Experiments/"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 DATA = ROOT + "data/eval_v1.jsonl"
 RUNS = ROOT + "out/eval_v1_runs/"
 LLMS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "google/gemini-2.5-flash-lite",
@@ -72,7 +72,7 @@ JEV_AXIS_Q = {ax: [k for k in JEV_Q if k[0] == ax[0]] for ax in AXES}
 
 def parse(raw):
     s = (raw or "").strip().strip('".').lower()
-    return 1 if s == "true" else 0 if s == "false" else None  # None = invalid answer, scored as a miss
+    return 1 if s == "true" else 0 if s == "false" else None  # None = invalid answer; the notebook blocks it (fail-closed)
 
 
 _client = None
@@ -116,11 +116,11 @@ def run_path(exp, model, runs=RUNS):
     return runs + f"{exp}__{model.replace('/', '_')}.jsonl"
 
 
-def run(exp, models, limit=None, data=DATA, runs=RUNS, workers=16, idx=None):
+def run(exp, models, data=DATA, runs=RUNS, workers=16, idx=None):
     """Asks each model about every record not yet in its run file. Resumable: rerun to retry errors.
-    `limit` takes the first n records; `idx` a given list of record indices (smoke tests)."""
+    `idx` limits it to a given list of record indices (smoke tests)."""
     recs = [json.loads(l) for l in open(data)]
-    todo_idx = list(idx) if idx is not None else list(range(len(recs)))[:limit]
+    todo_idx = list(idx) if idx is not None else range(len(recs))
     os.makedirs(runs, exist_ok=True)
     for m in models:
         if m == "jev" and not os.getenv("TYPESAFE_API_KEY"):
@@ -212,14 +212,6 @@ _WHAT = r"[\w -]{0,20}\b(?:password|key|token|pin|card|account|number|name|phone
 # Stars count only next to a letter or digit (d2577dcf****, ***-7283), so decorative "***** Title *****" lines do not.
 MASKED = re.compile(r"\w\*{3,}|\*{3,}(?:\w|[ .-]?\d)|\b[A-Za-z]\*{2,}|•{3,}|(?i:x{4,})|\[(?i:REDACTED|hidden)\]|<[A-Z][A-Z0-9_]{2,}>"
                     r"|\bYOUR_[A-Z_]+|\$\{[A-Z_]*(?:KEY|TOKEN|PASS|SECRET|PWD)[A-Z_]*\}|(?i:<" + _WHAT + r">|\[" + _WHAT + r"\])|\bsk-\.\.\.")
-
-
-def luhn(d):
-    s = 0
-    for i, c in enumerate(reversed(d)):
-        n = int(c) * (2 if i % 2 else 1)
-        s += n - 9 if n > 9 else n
-    return s % 10 == 0
 
 
 def regex_gate(text):

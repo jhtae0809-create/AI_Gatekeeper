@@ -1,6 +1,6 @@
-"""Shared code for the v1 evaluation set. Used by build_eval_v1.ipynb (and the frame generation run).
+"""Shared code for the v1 evaluation set. Used by build_eval_v1.ipynb (and `components` by Gatekeeper_v1.ipynb).
 
-Ported from pilot_set_v2.ipynb (record_text, insert, place, rec, luhn_ok, b62, looks_live, the WildChat Step 1 filter)
+Ported from pilot_set_v2.ipynb (record_text, insert, place, rec, b62, looks_live, the WildChat Step 1 filter)
 and extended for v1: six credential types, Faker identities for PII, masked and placeholder hard negatives,
 frames written by a free generator model, and a split grouped by pair, frame and WildChat conversation.
 Design: Dataset/docs/eval_v1_design.md. Run `python3 build_eval.py` for the self-test.
@@ -9,9 +9,9 @@ import collections, glob, hashlib, json, os, random, re, string, sys, zlib
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from secretscan import scan
+from secretscan import luhn, scan
 
-ROOT = "/Users/jhtae/PaperReview/Gatekeeper_Experiments/"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 DS = ROOT + "Dataset/"
 HASHES = ROOT + "out/wildchat_secret_hashes.txt"  # written by scan_wildchat.py
 ALNUM = string.ascii_letters + string.digits
@@ -32,11 +32,6 @@ def rec(**k):
 
 
 # ---------------------------------------------------------------- values
-def luhn_ok(n):
-    d = [int(x) for x in n[::-1]]
-    return (sum(d[0::2]) + sum(sum(divmod(2 * x, 10)) for x in d[1::2])) % 10 == 0
-
-
 def b62(n, width):
     s = ""
     while n:
@@ -120,7 +115,7 @@ class Values:
         r = self.rng
         while True:
             n = self.us.credit_card_number(r.choice(["visa16", "mastercard", "amex", "discover"]))
-            if n not in DOC_CARDS and luhn_ok(n):
+            if n not in DOC_CARDS and luhn(n):
                 break
         g = [n[:4], n[4:10], n[10:]] if len(n) == 15 else [n[i:i + 4] for i in range(0, 16, 4)]
         num = r.choice([" ", "-", ""]).join(g)
@@ -465,9 +460,8 @@ def load_wildchat(picks):
 
 
 # ---------------------------------------------------------------- split
-def group_split(records, frac, seed, keys=("pair_id", "frame_id", "conv_id")):
-    """Records sharing any key value go to the same split (union-find). Components are assigned greedily
-    so that each group gets close to `frac` in validation. Returns a list of 'validation'/'test'."""
+def components(records, keys=("pair_id", "frame_id", "conv_id")):
+    """Union-find: records sharing any key value get the same component id (a record index)."""
     parent = list(range(len(records)))
 
     def find(i):
@@ -480,11 +474,16 @@ def group_split(records, frac, seed, keys=("pair_id", "frame_id", "conv_id")):
     for i, r in enumerate(records):
         for k in keys:
             if r.get(k) is not None:
-                j = first.setdefault((k, r[k]), i)
-                parent[find(i)] = find(j)
+                parent[find(i)] = find(first.setdefault((k, r[k]), i))
+    return [find(i) for i in range(len(records))]
+
+
+def group_split(records, frac, seed, keys=("pair_id", "frame_id", "conv_id")):
+    """Records in one component go to the same split. Components are assigned greedily
+    so that each group gets close to `frac` in validation. Returns a list of 'validation'/'test'."""
     comps = collections.defaultdict(list)
-    for i in range(len(records)):
-        comps[find(i)].append(i)
+    for i, c in enumerate(components(records, keys)):
+        comps[c].append(i)
     comps = list(comps.values())
     random.Random(seed).shuffle(comps)
     total = collections.Counter(r["group"] for r in records)
@@ -501,13 +500,13 @@ def group_split(records, frac, seed, keys=("pair_id", "frame_id", "conv_id")):
 
 if __name__ == "__main__":
     v = Values(0)
-    assert luhn_ok("4111111111111111") and not luhn_ok("4111111111111112")
+    assert luhn("4111111111111111") and not luhn("4111111111111112")
     for k in CRED_TYPES:
         x = v.credential(k, "OpenAI")
         neg, st = v.cred_negative(k, x)
         assert x != neg and not looks_live(x), (k, x)
     c = v.card()
-    assert luhn_ok(re.sub(r"\D", "", re.split(r" exp|, | \(", c)[0])) and re.sub(r"\D", "", re.split(r" exp|, | \(", c)[0]) not in DOC_CARDS
+    assert luhn(re.sub(r"\D", "", re.split(r" exp|, | \(", c)[0])) and re.sub(r"\D", "", re.split(r" exp|, | \(", c)[0]) not in DOC_CARDS
     ident = v.identity()
     m, st = v.mask_identity(ident, ["name", "phone", "ssn"])
     assert all(m[s] != ident[s] for s in m) and not any(scan(" ".join(m.values())) if st == "stars" else [])

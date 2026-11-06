@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Full API runs for Gatekeeper_v1.ipynb, one process per model. Same G.run calls as the notebook; rerun to retry errors.
-cd /Users/jhtae/PaperReview/Gatekeeper_Experiments/scripts
+cd "$(dirname "$0")/../../scripts"
 for m in openai/gpt-6-luna anthropic/claude-haiku-5.5 google/gemini-2.5-flash-lite meta-llama/llama-3.1-8b-instruct deepseek/deepseek-chat; do
   n=${m//\//_}
   python3 -c "import gate as G

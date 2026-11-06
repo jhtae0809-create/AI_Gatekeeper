@@ -8,9 +8,8 @@ Output: out/scan_parts/<shard>.jsonl|.hashes|.json, one set per shard, so a reru
         - out/wildchat_secret_hashes.txt: SHA-256 of every distinct value with status "secret". Raw values are never written.
         - out/wildchat_scan_summary.json: hit counts by kind and status, and conversations with each status.
 
-Notebook link: pilot_set_v2.ipynb reads wildchat_secret_hashes.txt (`looks_live`) and redraws any generated value
-that matches a real WildChat secret. The notebook's Step 1 scans again, but only the English, unredacted, one-turn
-candidates, and only to drop them.
+Link: build_eval.py reads wildchat_secret_hashes.txt (`looks_live`) and redraws any generated value
+that matches a real WildChat secret.
 
 Result (rerun 2026-10-21 with the fixed scanner, about 15 minutes on 4 processes): 27,180 hits.
 Conversations with a secret 970, with a placeholder 3,500, with PII 2,834. 376 distinct secret values.
@@ -20,10 +19,11 @@ First run (2026-10-02, old scanner): 1,631 conversations with a secret, 777 dist
 (code references, constant names, example values) that the old scanner called secrets.
 """
 import glob, hashlib, json, os, collections, multiprocessing, pyarrow.parquet as pq
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 from secretscan import scan, mask
 
-SRC = "/Users/jhtae/PaperReview/Gatekeeper_Experiments/Dataset/WildChat/*.parquet"
-OUT = "/Users/jhtae/PaperReview/Gatekeeper_Experiments/out/"
+SRC = ROOT + "Dataset/WildChat/*.parquet"
+OUT = ROOT + "out/"
 PARTS = OUT + "scan_parts/"
 
 

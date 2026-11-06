@@ -11,7 +11,7 @@
    "B1 | gpt-6-luna": 0.927,
    "B1 | claude-haiku-5.5": 0.837,
    "B1 | gemini-2.5-flash-lite": 0.868,
-   "B1 | llama-3.1-8b-instruct": 0.167,
+   "B1 | llama-3.1-8b-instruct": 0.169,
    "B1 | deepseek-chat": 0.736,
    "B1 | jev": 0.895,
    "B1 | consensus 3-of-5": 0.829,
@@ -45,7 +45,7 @@
    "B1 | gpt-6-luna": 0.856,
    "B1 | claude-haiku-5.5": 0.84,
    "B1 | gemini-2.5-flash-lite": 0.696,
-   "B1 | llama-3.1-8b-instruct": 0.747,
+   "B1 | llama-3.1-8b-instruct": 0.749,
    "B1 | deepseek-chat": 0.861,
    "B1 | jev": 0.877,
    "B1 | consensus 3-of-5": 0.874,
@@ -96,7 +96,7 @@
    "B1 | gpt-6-luna": 0.828,
    "B1 | claude-haiku-5.5": 0.609,
    "B1 | gemini-2.5-flash-lite": 0.75,
-   "B1 | llama-3.1-8b-instruct": 0.227,
+   "B1 | llama-3.1-8b-instruct": 0.233,
    "B1 | deepseek-chat": 0.511,
    "B1 | jev": 0.736,
    "B1 | consensus 3-of-5": 0.624,
@@ -181,7 +181,7 @@
    "B1 | gpt-6-luna": 0.192,
    "B1 | claude-haiku-5.5": 0.347,
    "B1 | gemini-2.5-flash-lite": 0.389,
-   "B1 | llama-3.1-8b-instruct": 1.453,
+   "B1 | llama-3.1-8b-instruct": 1.45,
    "B1 | deepseek-chat": 0.504,
    "B1 | jev": 0.234,
    "B1 | consensus 3-of-5": 0.345,
@@ -198,7 +198,7 @@
    "B1 | gpt-6-luna": 0.847,
    "B1 | claude-haiku-5.5": 1.813,
    "B1 | gemini-2.5-flash-lite": 1.578,
-   "B1 | llama-3.1-8b-instruct": 8.953,
+   "B1 | llama-3.1-8b-instruct": 8.932,
    "B1 | deepseek-chat": 2.883,
    "B1 | jev": 1.183,
    "B1 | consensus 3-of-5": 1.888,
@@ -882,6 +882,43 @@
    "McNemar vs paper (b, c, p)": "696, 348, 2.2e-27"
   }
  },
+ "CURVE_RATES": {
+  "paper gate": {
+   "FNR": 0.6484674329501916,
+   "FPR": 0.07758620689655173,
+   "FPR clean": 0.028735632183908046
+  },
+  "B1 vote 3-of-5": {
+   "FNR": 0.171455938697318,
+   "FPR": 0.08979885057471264,
+   "FPR clean": 0.0028735632183908046
+  },
+  "local only": {
+   "FNR": 0.10727969348659004,
+   "FPR": 0.2514367816091954,
+   "FPR clean": 0.04310344827586207
+  },
+  "v1": {
+   "FNR": 0.045019157088122604,
+   "FPR": 0.1271551724137931,
+   "FPR clean": 0.04310344827586207
+  },
+  "v2": {
+   "FNR": 0.018199233716475097,
+   "FPR": 0.30028735632183906,
+   "FPR clean": 0.07758620689655173
+  },
+  "block all": {
+   "FNR": 0.0,
+   "FPR": 1.0,
+   "FPR clean": 1.0
+  },
+  "store all": {
+   "FNR": 1.0,
+   "FPR": 0.0,
+   "FPR clean": 0.0
+  }
+ },
  "picks": {
   "4": {
    "best on validation": "Jev any-question per axis, OR (r=4) + veto",
@@ -1068,10 +1105,10 @@
    "cost": 0.424
   },
   "r=4|llama-3.1-8b-instruct": {
-   "validation cost": 1.243,
-   "recall": 0.374,
+   "validation cost": 1.23,
+   "recall": 0.376,
    "fp_harmful_safe": 0.011,
-   "cost": 1.259
+   "cost": 1.253
   },
   "r=4|deepseek-chat": {
    "validation cost": 0.816,
@@ -1122,10 +1159,10 @@
    "cost": 2.385
   },
   "r=25|llama-3.1-8b-instruct": {
-   "validation cost": 7.737,
-   "recall": 0.374,
+   "validation cost": 7.655,
+   "recall": 0.376,
    "fp_harmful_safe": 0.011,
-   "cost": 7.836
+   "cost": 7.8
   },
   "r=25|deepseek-chat": {
    "validation cost": 5.03,
@@ -1239,12 +1276,12 @@
   },
   "harmful|B1": {
    "3-of-5 miss observed": 0.376,
-   "if independent": 0.325,
-   "mean pairwise ratio": 1.88
+   "if independent": 0.323,
+   "mean pairwise ratio": 1.89
   },
   "harmful|axis prompt": {
    "3-of-5 miss observed": 0.322,
-   "if independent": 0.235,
+   "if independent": 0.234,
    "mean pairwise ratio": 2.06
   }
  },
