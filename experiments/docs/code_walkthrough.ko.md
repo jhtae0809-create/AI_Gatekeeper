@@ -1337,7 +1337,7 @@ REASONING_OFF = {"openai/gpt-6-luna", "anthropic/claude-haiku-5.5"}
 AXES = ["pii", "credential", "harmful"]
 ```
 
-- `ROOT`는 파일 자기 위치에서 찾은 `Gatekeeper_Experiments/` 폴더라, 어느 컴퓨터에서도 경로가 맞아요.
+- `ROOT`는 파일 자기 위치에서 찾은 `experiments/` 폴더라, 어느 컴퓨터에서도 경로가 맞아요.
 - `LLMS`: LLM 5개, 모두 OpenRouter로 불러요.
 - `MODELS`: LLM 5개 + Jev(TypeSafe, 모델 `jev-latest`). Jev는 문장에 대한 **확률**을 돌려줘요.
 - `REASONING_OFF`: 이 두 모델은 답하기 전에 추론을 해요. 답을 5토큰으로 제한하면 추론에 토큰을 다 써서 빈 답이 와요. 그래서 추론을 꺼요.

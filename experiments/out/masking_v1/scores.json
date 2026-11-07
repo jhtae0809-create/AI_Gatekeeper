@@ -1,0 +1,123 @@
+{
+ "n": 2436,
+ "combos": {
+  "regex": {
+   "credential cleaned": 0.14367816091954022,
+   "credential cleaned (secret part)": 0.47701149425287354,
+   "pii cleaned": 0.35919540229885055,
+   "clean: any mask": 0.0,
+   "credential_hn: any mask": 0.040229885057471264,
+   "pii_hn: any mask": 0.0,
+   "harmful_safe: any mask": 0.0,
+   "safe: chars masked": 0.0001699156107092827
+  },
+  "presidio": {
+   "credential cleaned": 0.06321839080459771,
+   "credential cleaned (secret part)": 0.21839080459770116,
+   "pii cleaned": 0.8591954022988506,
+   "clean: any mask": 0.3074712643678161,
+   "credential_hn: any mask": 0.33620689655172414,
+   "pii_hn: any mask": 0.31896551724137934,
+   "harmful_safe: any mask": 0.10632183908045977,
+   "safe: chars masked": 0.00900297224562643
+  },
+  "gliner": {
+   "credential cleaned": 0.42528735632183906,
+   "credential cleaned (secret part)": 0.5948275862068966,
+   "pii cleaned": 0.9425287356321839,
+   "clean: any mask": 0.26436781609195403,
+   "credential_hn: any mask": 0.5258620689655172,
+   "pii_hn: any mask": 0.5574712643678161,
+   "harmful_safe: any mask": 0.3160919540229885,
+   "safe: chars masked": 0.01356194861266459
+  },
+  "detect-secrets": {
+   "credential cleaned": 0.07758620689655173,
+   "credential cleaned (secret part)": 0.14367816091954022,
+   "pii cleaned": 0.0,
+   "clean: any mask": 0.0,
+   "credential_hn: any mask": 0.08045977011494253,
+   "pii_hn: any mask": 0.0,
+   "harmful_safe: any mask": 0.0,
+   "safe: chars masked": 0.0002599836599950303
+  },
+  "all four": {
+   "credential cleaned": 0.49137931034482757,
+   "credential cleaned (secret part)": 0.8218390804597702,
+   "pii cleaned": 0.9885057471264368,
+   "clean: any mask": 0.4166666666666667,
+   "credential_hn: any mask": 0.6609195402298851,
+   "pii_hn: any mask": 0.646551724137931,
+   "harmful_safe: any mask": 0.35919540229885055,
+   "safe: chars masked": 0.016618513263957514
+  }
+ },
+ "slots": {
+  "regex": {
+   "address": 0.0,
+   "dob": 0.0,
+   "email": 1.0,
+   "mrn": 0.0,
+   "name": 0.0,
+   "passport": 0.0,
+   "phone": 0.211,
+   "ssn": 1.0,
+   "v": 0.144
+  },
+  "presidio": {
+   "address": 0.0,
+   "dob": 0.045,
+   "email": 1.0,
+   "mrn": 0.03,
+   "name": 0.863,
+   "passport": 0.034,
+   "phone": 0.579,
+   "ssn": 1.0,
+   "v": 0.063
+  },
+  "gliner": {
+   "address": 0.687,
+   "dob": 0.806,
+   "email": 1.0,
+   "mrn": 0.925,
+   "name": 0.793,
+   "passport": 0.931,
+   "phone": 0.842,
+   "ssn": 0.769,
+   "v": 0.425
+  },
+  "detect-secrets": {
+   "address": 0.0,
+   "dob": 0.0,
+   "email": 0.0,
+   "mrn": 0.0,
+   "name": 0.0,
+   "passport": 0.0,
+   "phone": 0.0,
+   "ssn": 0.0,
+   "v": 0.078
+  },
+  "all four": {
+   "address": 0.716,
+   "dob": 0.806,
+   "email": 1.0,
+   "mrn": 0.925,
+   "name": 0.961,
+   "passport": 0.966,
+   "phone": 0.895,
+   "ssn": 1.0,
+   "v": 0.491
+  },
+  "n": {
+   "address": 67,
+   "dob": 67,
+   "email": 70,
+   "mrn": 67,
+   "name": 357,
+   "passport": 29,
+   "phone": 76,
+   "ssn": 39,
+   "v": 348
+  }
+ }
+}

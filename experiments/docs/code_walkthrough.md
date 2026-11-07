@@ -1335,7 +1335,7 @@ REASONING_OFF = {"openai/gpt-6-luna", "anthropic/claude-haiku-5.5"}
 AXES = ["pii", "credential", "harmful"]
 ```
 
-- `ROOT` is the `Gatekeeper_Experiments/` folder, found from the file's own path, so paths work on any machine.
+- `ROOT` is the `experiments/` folder, found from the file's own path, so paths work on any machine.
 - `LLMS`: the five LLMs, all called through OpenRouter.
 - `MODELS`: the five LLMs + Jev (TypeSafe, model `jev-latest`). Jev returns a **probability** for a statement.
 - `REASONING_OFF`: these two models reason before they answer. With a 5-token answer limit, the reasoning uses up the tokens and the answer comes back empty, so reasoning is turned off.
