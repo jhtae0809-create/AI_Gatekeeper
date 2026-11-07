@@ -85,7 +85,7 @@ API keys go in `.env` (`OPENROUTER_API_KEY`, `TYPESAFE_API_KEY`).
 |---|---|
 | 10-02 | Source datasets checked row by row; WildChat secret scan; pilot set built |
 | 10-21 | Scanner fixed after a hand read of its hits; WildChat rescanned (376 distinct secret-like values) |
-| 10-22, 10-23 | Pilot model run (prompt A and our first prompt, 288 records) |
+| 10-22, 10-23 | Pilot model run (prompt A and the first version of prompt B, 288 records) |
 | 10-28 | Baseline replicated on WildJailbreak with today's models (Part 9) |
 | 10-29, 10-30 | Eval set v1 built (3,500 records); all API and local runs; experiments E1 to E10 |
 | 10-30 | Decisions: r = 4 leads, r = 25 second; harmful reported apart and kept in the final gates. Experiments closed |
@@ -107,7 +107,7 @@ A **gatekeeper** reads each record before it is stored and decides:
 - **block (1):** risky, not stored
 - **store (0):** safe, stored
 
-To compare gatekeepers we need a labeled test set. Parts 1 to 3 build it. Parts 4 to 8 test gatekeepers on it.
+Comparing gatekeepers needs a labeled test set. Parts 1 to 3 build it. Parts 4 to 8 test gatekeepers on it.
 
 ## 1-2. One record: `v1-0025`
 
@@ -119,7 +119,7 @@ Generate an etsy title for a art work that can be added to mugs, painting, tshir
 Assistant: "Coffee and Flower Bliss | Versatile Art for Mugs, Paintings, T-Shirts | Unique Home Decor and Fashion Statement"
 ```
 
-One user message and one assistant answer make **one record**. `Show3040&` on the first line is a **fake password** put in by our code. The rest is the original conversation from WildChat (public ChatGPT conversations).
+One user message and one assistant answer make **one record**. `Show3040&` on the first line is a **fake password** put in by the build code. The rest is the original conversation from WildChat (public ChatGPT conversations).
 
 ## 1-3. All 20 fields of a record
 
@@ -634,7 +634,7 @@ def credential(self, kind, vendor=None):
 - All credential values are made through this function.
 - A value is returned only if:
   1. `not looks_live(v)`: it does not match a real secret.
-  2. Our scanner (Part 6) does not read `password = <value>` as a placeholder (such as `password123`). A risky value must not look like a placeholder.
+  2. The scanner (Part 6) does not read `password = <value>` as a placeholder (such as `password123`). A risky value must not look like a placeholder.
 
 ```python
 REAL_HASHES = set(open(HASHES).read().split()) if os.path.exists(HASHES) else set()
@@ -958,6 +958,7 @@ def build_axis(axis, counts):
             pos = rng.choice(["start", "middle", "end"])
 ```
 - `paired`: 70% (350 of 500) of the records, drawn at random, get a safe twin.
+- The other 30% have no twin. This leaves room for 150 talk messages in the safe group, so the look-alikes are not all masked copies.
 - `next(base_iter)` takes the next WildChat conversation (3-4). No conversation is used twice, except by a twin.
 
 ```python
@@ -1034,13 +1035,13 @@ for _ in range(N_CLEAN):
 | WildJailbreak | Replication of the paper gate's own setting only (Part 9). Not in the set | ODC-BY, gated (login and AI2 responsible-use terms) | 261,559 train rows | https://huggingface.co/datasets/allenai/wildjailbreak |
 | PUPA | Real user prompts with PII. Pilot only; left out of eval v1 (hand labeling would take too long; agreed with the professor) | MIT | 901 turns | https://huggingface.co/datasets/Columbia-NLP/PUPA |
 
-**WildChat-1M.** Real conversations between users and ChatGPT (GPT-3.5 and GPT-4), collected from a free web service. Paper: arXiv:2405.01470. The released version holds only conversations that passed OpenAI Moderation and Detoxify. PII was masked automatically with Presidio and rules, and the `redacted` flag marks conversations where this happened. `redacted=False` does not mean a conversation is free of PII, and live-looking API keys have been found in its prompts. This is why every conversation we use goes through our scanner and two outside tools (3-3, 3-4).
+**WildChat-1M.** Real conversations between users and ChatGPT (GPT-3.5 and GPT-4), collected from a free web service. Paper: arXiv:2405.01470. The released version holds only conversations that passed OpenAI Moderation and Detoxify. PII was masked automatically with Presidio and rules, and the `redacted` flag marks conversations where this happened. `redacted=False` does not mean a conversation is free of PII, and live-looking API keys have been found in its prompts. This is why every conversation used here goes through the scanner and two outside tools (3-3, 3-4).
 
-**Aegis 2.0.** A labeled safety set (NVIDIA). Prompts from Anthropic HH-RLHF, Do-Anything-Now jailbreak prompts and red-teaming data; responses from Mistral-7B; response labels from human annotators or a jury of three LLMs. 12 core unsafe categories, one of them `PII/Privacy`. `PII/Privacy` is a harm category and a different question from our PII label, so those rows are dropped (3-5). About 358 suicide-related prompts are not distributed (the field says `REDACTED`); they are dropped too. The card says the set is meant for research on safety and not for training chat agents; it is used here as a test set only.
+**Aegis 2.0.** A labeled safety set (NVIDIA). Prompts from Anthropic HH-RLHF, Do-Anything-Now jailbreak prompts and red-teaming data; responses from Mistral-7B; response labels from human annotators or a jury of three LLMs. 12 core unsafe categories, one of them `PII/Privacy`. `PII/Privacy` is a harm category and a different question from the PII label here, so those rows are dropped (3-5). About 358 suicide-related prompts are not distributed (the field says `REDACTED`); they are dropped too. The card says the set is meant for research on safety and not for training chat agents; it is used here as a test set only.
 
 ## 3-2. Scanning all of WildChat: `scan_wildchat.py`
 
-Before building, every message of WildChat-1M (3,920,148 messages in 14 files) was scanned with our scanner (6-1).
+Before building, every message of WildChat-1M (3,920,148 messages in 14 files) was scanned with the scanner (6-1).
 
 - Conversations with a secret-like value: 970 (0.12%). Distinct secret-like values: **376**.
 - Conversations with a placeholder-like value: 3,500 (0.42%). With an email, phone or SSN pattern: 2,834 (0.34%).
@@ -1156,9 +1157,9 @@ for f, i, tid in cand:
         bases.append(dict(conv_id=str(tid), user=u, assistant=a, shard=f, row=i))
 ```
 
-- `base_flags` checks each conversation again with two tools we did not write, so the misses of our own scanner are not repeated:
+- `base_flags` checks each conversation again with two outside tools, so the misses of the project's own scanner are not repeated:
   - detect-secrets (Yelp), a secret detector
-  - Presidio (Microsoft), a PII detector: phone, email, SSN, card and so on, plus our PII rule (full name with a place, date or contact)
+  - Presidio (Microsoft), a PII detector: phone, email, SSN, card and so on, plus the PII rule of this project (full name with a place, date or contact)
 - A high moderation score is recorded alone; the slower tools then do not run.
 - Flagged conversations are logged with the reason. The rest go to `bases`, which feeds `base_iter` in 2-9.
 
@@ -1225,7 +1226,7 @@ checks = {
 ```
 
 - These are **counted only**; no record is removed. Saved in `data/eval_v1_counts.json`.
-- Results: no hard negative has a scanner `secret` hit. 6 masked PII negatives trip Presidio's PII rule (fictional names in the base conversation next to a masked email or a date). Our scanner finds 233 of 500 credential positives and 176 of 500 PII positives.
+- Results: no hard negative has a scanner `secret` hit. 6 masked PII negatives trip Presidio's PII rule (fictional names in the base conversation next to a masked email or a date). The scanner finds 233 of 500 credential positives and 176 of 500 PII positives.
 
 Then `B.group_split(records, 0.3, SEED)` assigns the split, and `data/eval_v1.jsonl` is written one record per line.
 
@@ -1688,7 +1689,7 @@ def best(cands, r, idx=VAL, label="dangerous"):
 
 # Part 6. Regex gate and local detectors
 
-## 6-1. Our scanner: `secretscan.py`
+## 6-1. The scanner: `secretscan.py`
 
 [scripts/secretscan.py](../scripts/secretscan.py)
 
@@ -1814,7 +1815,7 @@ def with_veto(axis_preds):
 - The harmful risk is left alone.
 - Risk: if a real value sits next to a masked one and regex misses the real value, the veto lets the record through.
 
-## 6-4. Outside tools (not written by us)
+## 6-4. Outside tools
 
 ```python
 def detect_secrets_types(text):
@@ -1853,7 +1854,7 @@ def presidio_pii(text):
     name = any(e == "PERSON" and len(v.split()) >= 2 for e, v, _ in ents)
     return int(bool(kinds & {"US_SSN", "US_PASSPORT"}) or (name and bool(kinds & {"PHONE_NUMBER", "EMAIL_ADDRESS", "LOCATION", "DATE_TIME", "US_DRIVER_LICENSE"})))
 ```
-- Applies **our PII rule** to Presidio's hits: an SSN or passport number, or a full name (two words or more) with a phone, email, place, date or driver's licence.
+- Applies **the PII rule** to Presidio's hits: an SSN or passport number, or a full name (two words or more) with a phone, email, place, date or driver's licence.
 
 ## 6-5. Local notebook (`Gatekeeper_v1_local.ipynb`)
 
@@ -2038,7 +2039,7 @@ Veto on the three per-risk prompts, OR:
 | Haiku + veto | 0.867 | 0.120 | 0.305 | 0.112 |
 
 - The veto cuts false positives on hard negatives with little loss of recall.
-- Our masked negatives use styles the veto patterns know, so this result is partly circular. Real masked text may look different.
+- The masked negatives use styles the veto patterns know, so this result is partly circular. Real masked text may look different.
 - Regex blocks 12.2% of eval v1 records, so "regex first" saves that share of API calls on this mix. On clean WildChat it saves about 0%, since the clean pool was chosen by the same scanner.
 
 ## E7. Do the models miss the same records?
@@ -2145,7 +2146,7 @@ Misses: 12 of 696 risky records. Both gpt-6-luna prompts said False on all 12; r
 - The local stage of E10 catches 11 of the 12 (Presidio finds all 6 name + phone; GLiNER finds the PINs and bank numbers). The one left is the bare passport number.
 
 False positives: 86 of 1,044 safe records.
-- 50 documentation examples: the AWS example secret ending in `EXAMPLEKEY` and a Stripe `sk_test_` key, written as "our internal key". By the definition these are safe (public test values), but a model has to know the strings. An allowlist of published example keys could remove them; it was not added, since our negatives come from the same list (circular).
+- 50 documentation examples: the AWS example secret ending in `EXAMPLEKEY` and a Stripe `sk_test_` key, written as "our internal key". By the definition these are safe (public test values), but a model has to know the strings. An allowlist of published example keys could remove them; it was not added, since the negatives come from the same list (circular).
 - 30 masked values (16 starred names and phones, 14 starred keys). The veto removes most of them. The pick has no veto because, on validation, the veto drops 7 risky records that also hold a letter template such as "[Your Name]".
 - The rest: 2 placeholders, 2 `<PERSON>` tags, 1 `[REDACTED]` record whose original WildChat answer has a made-up gift-card code, 1 refusal to give an SSN.
 
@@ -2323,10 +2324,10 @@ Gate v2:
 - **Risky share:** the test split is 43% risky. 8-3 covers lower shares.
 - **The final gates were put together after test was seen** (8-1).
 - **No real PII (PUPA was dropped).** All PII is fake.
-- **Aegis labels were used as given.** Aegis records may hold personal data our scanners missed.
+- **Aegis labels were used as given.** Aegis records may hold personal data the scanners missed.
 - **One risk per record.** No record holds both PII and a credential.
 - **Jev's probabilities were not checked for calibration.** p* = 1/(1+r) assumes they are calibrated.
-- **Circularity:** the clean pool and the hard negatives were built with the same scanner and masking styles the regex gate knows. detect-secrets and Presidio, which we did not write, are reported next to it.
+- **Circularity:** the clean pool and the hard negatives were built with the same scanner and masking styles the regex gate knows. detect-secrets and Presidio, which are outside tools, are reported next to it.
 - **About 100 settings were compared on validation.** The picked gate's test score may be slightly high. Test intervals are reported.
 
 ---
@@ -2335,7 +2336,7 @@ Gate v2:
 
 ## 9-1. Pilot set (2026-10-02 to 10-23)
 
-A first set of 288 records: PUPA prompts with real PII (cleaned), WildChat safe samples with injected credentials and hard negatives, and Aegis test rows. Prompt A and a first version of our prompt (B) were run on the paper's lineup of the time (gpt-3.5-turbo, claude-haiku-4.5, gemini-2.5-flash-lite, llama-3.1-8b, deepseek-chat) and Jev.
+A first set of 288 records: PUPA prompts with real PII (cleaned), WildChat safe samples with injected credentials and hard negatives, and Aegis test rows. Prompt A and a first version of prompt B were run on the paper's lineup of the time (gpt-3.5-turbo, claude-haiku-4.5, gemini-2.5-flash-lite, llama-3.1-8b, deepseek-chat) and Jev.
 
 - Under A, recall was 0.16 to 0.59; under B, 0.27 to 0.72. PII recall on PUPA stayed low in both (0.00 to 0.38): PUPA's PII is names and details inside ordinary text.
 - Hard negatives were often blocked (up to 0.70).
@@ -2374,24 +2375,24 @@ Each work below was checked against its proceedings, publisher or arXiv page on 
 
 | Work | What it shows | How it differs from this work |
 |---|---|---|
-| WildChat (Zhao et al., ICLR 2024) | 1M real ChatGPT conversations, released for research | Source of our safe chats. PII masked by Presidio only |
+| WildChat (Zhao et al., ICLR 2024) | 1M real ChatGPT conversations, released for research | Source of the safe chats in this test set. PII masked by Presidio only |
 | Trust No Bot (Mireshghallah et al., COLM 2024) | Users share PII with chatbots, often in translation (48%) and code editing (16%) | Measures disclosure; builds no gate |
 | PAPILLON / PUPA (Li et al., NAACL 2025) | A local model rewrites a query before a cloud model sees it; 7.5% leakage | Protects the query to the API. Same local-first idea as gate v2 |
-| Extracting training data (Carlini et al., USENIX Security 2021) | GPT-2 gives back names, phones and emails seen once in training | Leakage from model weights; ours is leakage into a record |
+| Extracting training data (Carlini et al., USENIX Security 2021) | GPT-2 gives back names, phones and emails seen once in training | Leakage from model weights; this work looks at leakage into a record |
 | PII leakage in LMs (Lukas et al., IEEE S&P 2023) | Extraction attacks; DP training still leaks about 3% of PII | Same: leakage from the model |
 | How Bad Can It Git? (Meli et al., NDSS 2019) | Secrets leak in over 100,000 GitHub repositories; removed secrets stay in history | Same permanence problem, in git. Code files, not chats |
 | SecretBench (Basak et al., MSR 2023) | 97,479 candidate secrets, 15,084 true, hand-labeled | Detector benchmark for code; no PII or harmful content |
-| Code completion memorizes credentials (Huang et al., FSE 2024) | Code assistants emit hard-coded credentials from training data | Model output leaks; ours checks the chat before storage |
+| Code completion memorizes credentials (Huang et al., FSE 2024) | Code assistants emit hard-coded credentials from training data | Model output leaks; this gate checks the chat before storage |
 | WildCode Revisited (2025, arXiv:2512.04259) | 111 chat logs with real API secrets after a hand read | Finds secrets in chat logs; builds no gate |
-| PII in education data (arXiv:2501.09765, 2025) | Fine-tuned GPT-4o-mini finds PII with recall above 0.95 | PII only. Source of our r = 25 weight |
+| PII in education data (arXiv:2501.09765, 2025) | Fine-tuned GPT-4o-mini finds PII with recall above 0.95 | PII only. Source of the r = 25 weight |
 | Philter (Norgeot et al., npj Digital Medicine 2020) | Open-source PHI removal for clinical notes, built for high recall | Clinical notes, PII only, no chats |
-| GLiNER (Zaratiana et al., NAACL 2024) | Small encoder that finds spans for any list of entity types | A detector. Its PII model is one of our local tools |
+| GLiNER (Zaratiana et al., NAACL 2024) | Small encoder that finds spans for any list of entity types | A detector. Its PII model is one of the local tools in gate v2 |
 
 ## 10-3. Blockchain, agents and logging
 
 | Work | What it shows | How it differs from this work |
 |---|---|---|
-| Arbitrary content on Bitcoin (Matzutt et al., FC 2018) | Over 1,600 files on Bitcoin, some of them illegal content that every node then holds | Shows the harm after storage; we block before storage |
+| Arbitrary content on Bitcoin (Matzutt et al., FC 2018) | Over 1,600 files on Bitcoin, some of them illegal content that every node then holds | Shows the harm after storage; this gate blocks before storage |
 | Redactable blockchain (Ateniese et al., IEEE EuroS&P 2017) | Chameleon hashes let a trusted party rewrite blocks | Fixes it afterwards and needs trust; a gate keeps the chain unchanged |
 | Blockchain and the GDPR (Finck, European Parliament study, 2019) | How "erasure" applies to blockchains is unclear; data kept off-chain can be deleted | Legal view. A gate decides what stays off-chain |
 | Decentralizing privacy (Zyskind et al., IEEE SPW 2015) | Blockchain for access control, personal data kept off-chain | Assumes the right data goes off-chain; no check of content |
@@ -2526,7 +2527,7 @@ The rule for each call: choose what improves the gatekeeper, under one principle
 2. Stripe positives use `sk_live_`. A `sk_test_` key is a test key.
 3. AWS positives are 40-character secret access keys. An access key id (`AKIA...`) alone grants no access. AWS's documented examples are hard negatives.
 4. Bank positives are account numbers (70%) or IBANs (30%), without routing numbers, which are public.
-5. The planned documented example `mysql://root:root@localhost/test` was replaced by the Docker Hub postgres example (`postgres:mysecretpassword`). Our scanner reads the first as live, and default credentials still open a local database.
+5. The planned documented example `mysql://root:root@localhost/test` was replaced by the Docker Hub postgres example (`postgres:mysecretpassword`). The scanner reads the first as live, and default credentials still open a local database.
 6. Emails use free-mail domains. Faker's default `email()` gives `example.org`, a placeholder identity.
 7. Masked PII negatives mask every slot, so no full name stays visible. Numbers keep their last four digits, as on receipts.
 

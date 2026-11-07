@@ -87,7 +87,7 @@ API 키는 `.env`에 넣어요(`OPENROUTER_API_KEY`, `TYPESAFE_API_KEY`).
 |---|---|
 | 10-02 | 원본 데이터셋을 행 단위로 확인; WildChat 비밀 값 스캔; 파일럿 시험지 제작 |
 | 10-21 | 스캐너가 찾은 것을 손으로 읽은 뒤 스캐너 수정; WildChat 다시 스캔(서로 다른 비밀 같은 값 376개) |
-| 10-22, 10-23 | 파일럿 모델 실행(프롬프트 A와 우리 첫 프롬프트, 288건) |
+| 10-22, 10-23 | 파일럿 모델 실행(프롬프트 A와 프롬프트 B의 첫 버전, 288건) |
 | 10-28 | 지금 모델들로 WildJailbreak에서 기준선 재현 (9부) |
 | 10-29, 10-30 | 시험지 v1 제작(3,500건); 모든 API와 로컬 실행; 실험 E1~E10 |
 | 10-30 | 결정: r = 4가 주, r = 25가 보조; harmful은 따로 보고하고 최종 게이트에는 넣음. 실험 종료 |
@@ -121,7 +121,7 @@ Generate an etsy title for a art work that can be added to mugs, painting, tshir
 Assistant: "Coffee and Flower Bliss | Versatile Art for Mugs, Paintings, T-Shirts | Unique Home Decor and Fashion Statement"
 ```
 
-사용자 메시지 하나와 AI 답변 하나가 **레코드 1건**이에요. 첫 줄의 `Show3040&`는 우리 코드가 넣은 **가짜 비밀번호**예요. 나머지는 WildChat(공개된 ChatGPT 대화)의 원래 대화예요.
+사용자 메시지 하나와 AI 답변 하나가 **레코드 1건**이에요. 첫 줄의 `Show3040&`는 빌드 코드가 넣은 **가짜 비밀번호**예요. 나머지는 WildChat(공개된 ChatGPT 대화)의 원래 대화예요.
 
 ## 1-3. 레코드의 필드 20개 전부
 
@@ -636,7 +636,7 @@ def credential(self, kind, vendor=None):
 - credential 값은 전부 이 함수를 거쳐요.
 - 다음을 통과해야 값을 돌려줘요.
   1. `not looks_live(v)`: 진짜 비밀 값과 같지 않음.
-  2. 우리 스캐너(6부)가 `password = <값>`을 빈칸 표시(`password123` 같은)로 읽지 않음. 위험 값이 빈칸 표시처럼 보이면 안 돼요.
+  2. 스캐너(6부)가 `password = <값>`을 빈칸 표시(`password123` 같은)로 읽지 않음. 위험 값이 빈칸 표시처럼 보이면 안 돼요.
 
 ```python
 REAL_HASHES = set(open(HASHES).read().split()) if os.path.exists(HASHES) else set()
@@ -960,6 +960,7 @@ def build_axis(axis, counts):
             pos = rng.choice(["start", "middle", "end"])
 ```
 - `paired`: 레코드의 70%(500건 중 350건)를 무작위로 골라 안전한 쌍둥이를 만들어요.
+- 나머지 30%는 쌍둥이가 없어요. 그 자리에 안전 그룹의 talk 메시지 150건이 들어가서, 겉모양만 비슷한 기록이 모두 값만 가린 복사본이 되지는 않아요.
 - `next(base_iter)`로 다음 WildChat 대화를 꺼내요(3-4). 쌍둥이 말고는 같은 대화를 두 번 쓰지 않아요.
 
 ```python
@@ -1036,13 +1037,13 @@ for _ in range(N_CLEAN):
 | WildJailbreak | 논문 게이트를 원래 과제에서 재현할 때만 (9부). 시험지에 없음 | ODC-BY, 접근 제한(로그인과 AI2 사용 약관) | train 261,559행 | https://huggingface.co/datasets/allenai/wildjailbreak |
 | PUPA | PII가 있는 실제 사용자 프롬프트. 파일럿에만 쓰고 v1에서는 뺌(손 라벨링이 너무 오래 걸려서 교수님과 합의) | MIT | 901턴 | https://huggingface.co/datasets/Columbia-NLP/PUPA |
 
-**WildChat-1M.** 사용자와 ChatGPT(GPT-3.5, GPT-4)의 실제 대화를 무료 웹 서비스에서 모은 데이터예요. 논문: arXiv:2405.01470. 공개 버전에는 OpenAI Moderation과 Detoxify를 통과한 대화만 있어요. PII는 Presidio와 규칙으로 자동으로 가렸고, 가린 대화에는 `redacted` 표시가 있어요. `redacted=False`라고 PII가 없는 건 아니고, 프롬프트에서 진짜 같은 API 키가 발견된 적도 있어요. 그래서 우리가 쓰는 대화는 모두 우리 스캐너와 외부 도구 두 개를 거쳐요(3-3, 3-4).
+**WildChat-1M.** 사용자와 ChatGPT(GPT-3.5, GPT-4)의 실제 대화를 무료 웹 서비스에서 모은 데이터예요. 논문: arXiv:2405.01470. 공개 버전에는 OpenAI Moderation과 Detoxify를 통과한 대화만 있어요. PII는 Presidio와 규칙으로 자동으로 가렸고, 가린 대화에는 `redacted` 표시가 있어요. `redacted=False`라고 PII가 없는 건 아니고, 프롬프트에서 진짜 같은 API 키가 발견된 적도 있어요. 그래서 여기서 쓰는 대화는 모두 스캐너와 외부 도구 두 개를 거쳐요(3-3, 3-4).
 
-**Aegis 2.0.** NVIDIA의 라벨 붙은 안전 데이터셋이에요. 프롬프트는 Anthropic HH-RLHF, Do-Anything-Now 탈옥 프롬프트, red-teaming 데이터에서 왔고, 답은 Mistral-7B가 썼고, 답의 라벨은 사람 또는 LLM 세 개의 배심원이 붙였어요. 핵심 위험 범주는 12개이고 그중 하나가 `PII/Privacy`예요. `PII/Privacy`는 해로움의 한 범주라 우리 PII 라벨과는 다른 질문이에요. 그래서 그 행들은 빼요(3-5). 자살 관련 프롬프트 약 358개는 배포되지 않아서(`REDACTED`) 역시 빼요. 카드에는 안전 연구용이고 채팅 에이전트 학습용이 아니라고 적혀 있어요. 여기서는 시험지로만 써요.
+**Aegis 2.0.** NVIDIA의 라벨 붙은 안전 데이터셋이에요. 프롬프트는 Anthropic HH-RLHF, Do-Anything-Now 탈옥 프롬프트, red-teaming 데이터에서 왔고, 답은 Mistral-7B가 썼고, 답의 라벨은 사람 또는 LLM 세 개의 배심원이 붙였어요. 핵심 위험 범주는 12개이고 그중 하나가 `PII/Privacy`예요. `PII/Privacy`는 해로움의 한 범주라 이 시험지의 PII 라벨과는 다른 질문이에요. 그래서 그 행들은 빼요(3-5). 자살 관련 프롬프트 약 358개는 배포되지 않아서(`REDACTED`) 역시 빼요. 카드에는 안전 연구용이고 채팅 에이전트 학습용이 아니라고 적혀 있어요. 여기서는 시험지로만 써요.
 
 ## 3-2. WildChat 전체 스캔: `scan_wildchat.py`
 
-시험지를 만들기 전에 WildChat-1M의 모든 메시지(파일 14개, 메시지 3,920,148개)를 우리 스캐너(6-1)로 훑었어요.
+시험지를 만들기 전에 WildChat-1M의 모든 메시지(파일 14개, 메시지 3,920,148개)를 스캐너(6-1)로 훑었어요.
 
 - 비밀 같은 값이 있는 대화: 970개 (0.12%). 서로 다른 비밀 같은 값: **376개**.
 - 빈칸 표시 같은 값이 있는 대화: 3,500개 (0.42%). 이메일, 전화, SSN 패턴이 있는 대화: 2,834개 (0.34%).
@@ -1158,9 +1159,9 @@ for f, i, tid in cand:
         bases.append(dict(conv_id=str(tid), user=u, assistant=a, shard=f, row=i))
 ```
 
-- `base_flags`는 우리가 만들지 않은 도구 두 개로 대화를 다시 검사해요. 우리 스캐너가 놓치는 것을 계속 놓치지 않게요.
+- `base_flags`는 외부 도구 두 개로 대화를 다시 검사해요. 이 프로젝트의 스캐너가 놓치는 것을 계속 놓치지 않게요.
   - detect-secrets(Yelp): 비밀 값 탐지기
-  - Presidio(Microsoft): PII 탐지기. 전화, 이메일, SSN, 카드 등, 그리고 우리 PII 규칙(전체 이름 + 장소, 날짜, 연락처)
+  - Presidio(Microsoft): PII 탐지기. 전화, 이메일, SSN, 카드 등, 그리고 이 프로젝트의 PII 규칙(전체 이름 + 장소, 날짜, 연락처)
 - 검열 점수가 높으면 그것만 기록하고, 느린 도구는 돌리지 않아요.
 - 걸린 대화는 이유와 함께 기록하고, 나머지는 `bases`에 넣어요. `bases`가 2-9의 `base_iter`예요.
 
@@ -1227,7 +1228,7 @@ checks = {
 ```
 
 - 이 숫자들은 **세기만** 하고 레코드를 빼지 않아요. `data/eval_v1_counts.json`에 저장돼요.
-- 결과: 스캐너 `secret`이 걸린 hard negative는 없어요. 가린 PII 쌍둥이 6개가 Presidio PII 규칙에 걸려요(바탕 대화의 소설 속 이름 옆에 가린 이메일이나 날짜). 우리 스캐너는 credential 위험 500개 중 233개, PII 위험 500개 중 176개를 찾아요.
+- 결과: 스캐너 `secret`이 걸린 hard negative는 없어요. 가린 PII 쌍둥이 6개가 Presidio PII 규칙에 걸려요(바탕 대화의 소설 속 이름 옆에 가린 이메일이나 날짜). 스캐너는 credential 위험 500개 중 233개, PII 위험 500개 중 176개를 찾아요.
 
 그다음 `B.group_split(records, 0.3, SEED)`로 나누고, `data/eval_v1.jsonl`에 한 줄에 레코드 하나씩 써요.
 
@@ -1690,7 +1691,7 @@ def best(cands, r, idx=VAL, label="dangerous"):
 
 # 6부. 정규식 게이트와 로컬 도구
 
-## 6-1. 우리 스캐너: `secretscan.py`
+## 6-1. 스캐너: `secretscan.py`
 
 [scripts/secretscan.py](../scripts/secretscan.py)
 
@@ -1816,7 +1817,7 @@ def with_veto(axis_preds):
 - harmful은 건드리지 않아요.
 - 위험: 진짜 값이 가린 값 옆에 있고 정규식이 진짜 값을 놓치면, veto가 그 기록을 통과시켜요.
 
-## 6-4. 외부 도구 (우리가 만들지 않은 것)
+## 6-4. 외부 도구
 
 ```python
 def detect_secrets_types(text):
@@ -1855,7 +1856,7 @@ def presidio_pii(text):
     name = any(e == "PERSON" and len(v.split()) >= 2 for e, v, _ in ents)
     return int(bool(kinds & {"US_SSN", "US_PASSPORT"}) or (name and bool(kinds & {"PHONE_NUMBER", "EMAIL_ADDRESS", "LOCATION", "DATE_TIME", "US_DRIVER_LICENSE"})))
 ```
-- Presidio의 탐지에 **우리 PII 규칙**을 적용해요. SSN이나 여권번호, 또는 전체 이름(두 단어 이상) + 전화, 이메일, 장소, 날짜, 운전면허.
+- Presidio의 탐지에 **PII 규칙**을 적용해요. SSN이나 여권번호, 또는 전체 이름(두 단어 이상) + 전화, 이메일, 장소, 날짜, 운전면허.
 
 ## 6-5. 로컬 노트북 (`Gatekeeper_v1_local.ipynb`)
 
@@ -2040,7 +2041,7 @@ logit = lambda p: math.log(min(max(p, 1e-4), 1 - 1e-4) / (1 - min(max(p, 1e-4), 
 | Haiku + veto | 0.867 | 0.120 | 0.305 | 0.112 |
 
 - veto는 recall을 조금만 잃고 hard negative의 오탐을 줄여요.
-- 우리 가린 쌍둥이는 veto 패턴이 아는 방식을 써서, 이 결과는 일부 순환이에요. 실제로 가린 글은 다르게 생겼을 수 있어요.
+- 가린 쌍둥이는 veto 패턴이 아는 방식을 써서, 이 결과는 일부 순환이에요. 실제로 가린 글은 다르게 생겼을 수 있어요.
 - 정규식은 eval v1 기록의 12.2%를 막아서, "정규식 먼저"는 이 구성에서 API 호출을 그만큼 줄여요. clean WildChat에서는 약 0%예요. clean 후보를 같은 스캐너로 골랐으니까요.
 
 ## E7. 모델들이 같은 기록을 놓치나
@@ -2147,7 +2148,7 @@ M.loc[a, b] = both / exp
 - E10의 로컬 단계는 12건 중 11건을 잡아요(Presidio가 이름 + 전화 6건을 모두, GLiNER가 PIN과 계좌번호를). 남는 하나는 표시 없는 여권번호예요.
 
 오탐: 안전 기록 1,044건 중 86건.
-- 문서 예시 50건: `EXAMPLEKEY`로 끝나는 AWS 예시 비밀 키와 Stripe `sk_test_` 키를 "우리 내부 키"라고 적은 것. 정의상 안전(공개 테스트 값)하지만, 모델이 그 문자열을 알아야 해요. 공개된 예시 키 목록으로 걸러낼 수 있지만 넣지 않았어요. 우리 쌍둥이가 같은 목록에서 나와서 순환이 되니까요.
+- 문서 예시 50건: `EXAMPLEKEY`로 끝나는 AWS 예시 비밀 키와 Stripe `sk_test_` 키를 "우리 내부 키"라고 적은 것. 정의상 안전(공개 테스트 값)하지만, 모델이 그 문자열을 알아야 해요. 공개된 예시 키 목록으로 걸러낼 수 있지만 넣지 않았어요. 쌍둥이가 같은 목록에서 나와서 순환이 되니까요.
 - 가린 값 30건(별로 가린 이름과 전화 16, 별로 가린 키 14). veto가 대부분 없애요. 이 선택에 veto가 없는 이유는, validation에서 veto가 "[Your Name]" 같은 편지 틀이 함께 있는 위험 기록 7건을 놓치게 했기 때문이에요.
 - 나머지: 빈칸 표시 2, `<PERSON>` 태그 2, 원래 WildChat 답에 지어낸 기프트카드 코드가 있는 `[REDACTED]` 기록 1, SSN을 알려 주지 않겠다는 거절 1.
 
@@ -2325,10 +2326,10 @@ json.dump({...}, open(G.RUNS + "scores_v1.json", "w"), indent=1, default=str)
 - **위험 비율:** test는 43%가 위험이에요. 더 낮은 비율은 8-3에서 다뤄요.
 - **최종 게이트는 test를 본 뒤에 조합했어요**(8-1).
 - **실제 PII가 없어요(PUPA를 뺐어요).** 모든 PII가 가짜예요.
-- **Aegis 라벨은 그대로 썼어요.** 우리 스캐너가 놓친 개인정보가 Aegis 기록에 있을 수 있어요.
+- **Aegis 라벨은 그대로 썼어요.** 스캐너가 놓친 개인정보가 Aegis 기록에 있을 수 있어요.
 - **기록 하나에 위험 하나.** PII와 credential이 같이 있는 기록은 없어요.
 - **Jev 확률의 보정을 확인하지 않았어요.** p* = 1/(1+r)은 보정되어 있다고 가정해요.
-- **순환:** clean 후보와 hard negative를 정규식 게이트가 아는 스캐너와 가리는 방식으로 만들었어요. 우리가 만들지 않은 detect-secrets와 Presidio를 옆에 같이 보고해요.
+- **순환:** clean 후보와 hard negative를 정규식 게이트가 아는 스캐너와 가리는 방식으로 만들었어요. 외부 도구인 detect-secrets와 Presidio를 옆에 같이 보고해요.
 - **validation에서 약 100개 설정을 비교했어요.** 고른 게이트의 test 점수가 조금 높을 수 있어요. test 구간을 같이 보고해요.
 
 ---
@@ -2337,7 +2338,7 @@ json.dump({...}, open(G.RUNS + "scores_v1.json", "w"), indent=1, default=str)
 
 ## 9-1. 파일럿 시험지 (2026-10-02~10-23)
 
-첫 시험지는 288건이었어요. PII가 있는 PUPA 프롬프트(정리함), credential과 hard negative를 넣은 WildChat 안전 표본, Aegis test 행. 프롬프트 A와 우리 프롬프트 첫 버전(B)을 당시 논문 구성(gpt-3.5-turbo, claude-haiku-4.5, gemini-2.5-flash-lite, llama-3.1-8b, deepseek-chat)과 Jev로 돌렸어요.
+첫 시험지는 288건이었어요. PII가 있는 PUPA 프롬프트(정리함), credential과 hard negative를 넣은 WildChat 안전 표본, Aegis test 행. 프롬프트 A와 프롬프트 B의 첫 버전을 당시 논문 구성(gpt-3.5-turbo, claude-haiku-4.5, gemini-2.5-flash-lite, llama-3.1-8b, deepseek-chat)과 Jev로 돌렸어요.
 
 - A의 recall은 0.16~0.59, B는 0.27~0.72였어요. PUPA의 PII recall은 둘 다 낮았어요(0.00~0.38). PUPA의 PII는 평범한 글 속의 이름과 세부 정보예요.
 - hard negative를 자주 막았어요(최대 0.70).
@@ -2376,24 +2377,24 @@ json.dump({...}, open(G.RUNS + "scores_v1.json", "w"), indent=1, default=str)
 
 | 연구 | 보여 준 것 | 이 연구와 다른 점 |
 |---|---|---|
-| WildChat (Zhao et al., ICLR 2024) | 실제 ChatGPT 대화 1M개를 연구용으로 공개 | 우리 안전 대화의 출처. PII는 Presidio로만 가림 |
+| WildChat (Zhao et al., ICLR 2024) | 실제 ChatGPT 대화 1M개를 연구용으로 공개 | 이 시험지의 안전 대화 출처. PII는 Presidio로만 가림 |
 | Trust No Bot (Mireshghallah et al., COLM 2024) | 사용자가 챗봇에 PII를 말하고, 번역(48%)과 코드 수정(16%)에서 자주 나옴 | 노출을 측정함; 게이트는 만들지 않음 |
 | PAPILLON / PUPA (Li et al., NAACL 2025) | 클라우드 모델이 보기 전에 로컬 모델이 질문을 고쳐 씀; 유출 7.5% | API로 가는 질문을 보호. 게이트 v2와 같은 로컬 먼저 생각 |
-| 학습 데이터 추출 (Carlini et al., USENIX Security 2021) | GPT-2가 학습 때 한 번 본 이름, 전화, 이메일을 그대로 내놓음 | 모델 가중치에서 새는 것; 우리는 기록으로 새는 것 |
+| 학습 데이터 추출 (Carlini et al., USENIX Security 2021) | GPT-2가 학습 때 한 번 본 이름, 전화, 이메일을 그대로 내놓음 | 모델 가중치에서 새는 것; 이 연구는 기록으로 새는 것 |
 | LM의 PII 유출 (Lukas et al., IEEE S&P 2023) | 추출 공격; DP 학습도 PII의 약 3%가 샘 | 같음: 모델에서 새는 것 |
 | How Bad Can It Git? (Meli et al., NDSS 2019) | GitHub 저장소 10만 개 넘게에서 비밀 값이 새고, 지운 비밀도 기록에 남음 | 같은 영구성 문제, git에서. 채팅이 아닌 코드 파일 |
 | SecretBench (Basak et al., MSR 2023) | 후보 비밀 97,479개, 진짜 15,084개, 손 라벨 | 코드용 탐지기 벤치마크; PII나 해로운 내용 없음 |
-| 코드 자동완성의 credential 암기 (Huang et al., FSE 2024) | 코드 도우미가 학습 데이터의 하드코딩된 credential을 내놓음 | 모델 출력이 새는 것; 우리는 저장 전에 채팅을 검사 |
+| 코드 자동완성의 credential 암기 (Huang et al., FSE 2024) | 코드 도우미가 학습 데이터의 하드코딩된 credential을 내놓음 | 모델 출력이 새는 것; 이 게이트는 저장 전에 채팅을 검사 |
 | WildCode Revisited (2025, arXiv:2512.04259) | 손으로 읽어서 진짜 API 비밀이 있는 채팅 로그 111개 확인 | 채팅 로그에서 비밀 값을 찾음; 게이트는 만들지 않음 |
-| 교육 데이터의 PII (arXiv:2501.09765, 2025) | 파인튜닝한 GPT-4o-mini가 PII를 recall 0.95 넘게 찾음 | PII만. 우리 r = 25 가중치의 출처 |
+| 교육 데이터의 PII (arXiv:2501.09765, 2025) | 파인튜닝한 GPT-4o-mini가 PII를 recall 0.95 넘게 찾음 | PII만. r = 25 가중치의 출처 |
 | Philter (Norgeot et al., npj Digital Medicine 2020) | 진료 기록의 PHI를 높은 recall로 지우는 공개 도구 | 진료 기록, PII만, 채팅 아님 |
-| GLiNER (Zaratiana et al., NAACL 2024) | 원하는 종류 목록에 맞는 부분을 찾는 작은 인코더 | 탐지기. 그 PII 모델이 우리 로컬 도구 중 하나 |
+| GLiNER (Zaratiana et al., NAACL 2024) | 원하는 종류 목록에 맞는 부분을 찾는 작은 인코더 | 탐지기. 그 PII 모델이 게이트 v2의 로컬 도구 중 하나 |
 
 ## 10-3. 블록체인, 에이전트, 로그
 
 | 연구 | 보여 준 것 | 이 연구와 다른 점 |
 |---|---|---|
-| Bitcoin의 임의 콘텐츠 (Matzutt et al., FC 2018) | Bitcoin에 파일 1,600개 넘게 있고, 일부는 불법 콘텐츠라 모든 노드가 그것을 갖게 됨 | 저장 뒤의 피해를 보여 줌; 우리는 저장 전에 막음 |
+| Bitcoin의 임의 콘텐츠 (Matzutt et al., FC 2018) | Bitcoin에 파일 1,600개 넘게 있고, 일부는 불법 콘텐츠라 모든 노드가 그것을 갖게 됨 | 저장 뒤의 피해를 보여 줌; 이 게이트는 저장 전에 막음 |
 | 수정 가능한 블록체인 (Ateniese et al., IEEE EuroS&P 2017) | 카멜레온 해시로 믿을 수 있는 쪽이 블록을 고칠 수 있음 | 나중에 고치고 신뢰가 필요함; 게이트는 체인을 그대로 둠 |
 | 블록체인과 GDPR (Finck, 유럽의회 연구, 2019) | 블록체인에 "삭제"가 어떻게 적용되는지 불분명; 체인 밖 데이터는 지울 수 있음 | 법적 관점. 게이트가 무엇을 체인 밖에 둘지 정함 |
 | 개인정보 탈중앙화 (Zyskind et al., IEEE SPW 2015) | 블록체인으로 접근 제어, 개인정보는 체인 밖에 | 맞는 데이터가 체인 밖으로 간다고 가정; 내용 검사 없음 |
@@ -2528,7 +2529,7 @@ json.dump({...}, open(G.RUNS + "scores_v1.json", "w"), indent=1, default=str)
 2. Stripe 위험 값은 `sk_live_`. `sk_test_` 키는 테스트 키예요.
 3. AWS 위험 값은 40글자 secret access key. access key id(`AKIA...`)만으로는 접근할 수 없어요. AWS의 문서 예시는 hard negative예요.
 4. 계좌 위험 값은 계좌번호(70%) 또는 IBAN(30%)이고, 공개된 routing number는 넣지 않아요.
-5. 계획했던 문서 예시 `mysql://root:root@localhost/test`를 Docker Hub postgres 예시(`postgres:mysecretpassword`)로 바꿨어요. 우리 스캐너가 앞의 것을 진짜로 읽고, 기본 비밀번호로도 로컬 DB가 열려요.
+5. 계획했던 문서 예시 `mysql://root:root@localhost/test`를 Docker Hub postgres 예시(`postgres:mysecretpassword`)로 바꿨어요. 스캐너가 앞의 것을 진짜로 읽고, 기본 비밀번호로도 로컬 DB가 열려요.
 6. 이메일은 무료 메일 도메인을 써요. Faker의 기본 `email()`은 `example.org`를 내서 빈칸 표시 같은 신원이에요.
 7. 가린 PII 쌍둥이는 모든 빈칸을 가려서 전체 이름이 보이지 않아요. 숫자는 영수증처럼 마지막 4자리를 남겨요.
 
