@@ -26,9 +26,13 @@ Full write-up of every step, decision and result: [docs/code_walkthrough.md](doc
 | `build_eval_v1.ipynb` | Builds the 3,500-record evaluation set (7 groups of 500) |
 | `Gatekeeper_v1.ipynb` | API experiments E1 to E10, final gates, cost by risky share |
 | `Gatekeeper_v1_local.ipynb` | Local detectors: Presidio, GLiNER, detect-secrets, Granite Guardian |
+| `Masking_v1.ipynb` | Masking spans instead of blocking records; credential rules; AI check of the masks |
+| `Vision_v1.ipynb` | Photos taken at home (BIV-Priv-Seg, 1,030): OCR in four orientations, label drafts and hand check (157), grouped split, text gates on OCR text, VLM on the photo, MVP masking and re-read of masked photos. Scores in `out/vision_v1/scores.json` |
 | `scripts/build_eval.py` | Fake values, frames, insertion, split |
 | `scripts/gate.py` | Prompts, API run loop, scoring, regex gate, bootstrap, McNemar |
 | `scripts/secretscan.py` | Regex and entropy scanner for secrets and PII |
+| `scripts/masking.py` | Span finders, credential rules, AI check of the masks (shared with the MVP) |
+| `scripts/vision.py` | OCR (Tesseract, Apple Vision) in four orientations, orientation methods, QR boxes, photo blackout, label drafts, on-device flags and True/False questions for text and photos (shared with the MVP) |
 | `scripts/scan_wildchat.py` | Scans all of WildChat-1M; its secret hashes keep generated values away from real ones |
 | `data/frames_v1.jsonl` | Generated message frames with empty slots (generator output, cached) |
 | `data/eval_v1_counts.json` | Build counts and checks |
@@ -37,7 +41,7 @@ Full write-up of every step, decision and result: [docs/code_walkthrough.md](doc
 | `out/eval_v1_logs/misses.py` | Hand-read of the errors of the main pick |
 | `docs/code_walkthrough.md` | The whole experiment explained step by step, with code, decisions and all result tables |
 
-Self-tests (no API call): `python scripts/secretscan.py`, `python scripts/gate.py`, `python scripts/build_eval.py`.
+Self-tests (no API call): `python scripts/secretscan.py`, `python scripts/gate.py`, `python scripts/build_eval.py`, `python scripts/vision.py`.
 
 ## Rerun
 
@@ -49,7 +53,7 @@ Self-tests (no API call): `python scripts/secretscan.py`, `python scripts/gate.p
 
 ## Not in this repo
 
-- Source datasets and the built set. They hold real conversation text, and some are gated. Sources: WildChat-1M (ODC-BY), Aegis 2.0 (CC BY 4.0).
+- Source datasets and the built set. They hold real conversation text, and some are gated. Sources: WildChat-1M (ODC-BY), Aegis 2.0 (CC BY 4.0), BIV-Priv-Seg query set (vizwiz.cs.colorado.edu/biv-priv, unzipped into `Dataset/BIV-Priv/`).
 - Raw model answers (`out/eval_v1_runs/*.jsonl`).
 - API keys. Put `OPENROUTER_API_KEY` and `TYPESAFE_API_KEY` in `.env`.
 - `scripts/baseline_prompt.txt` (prompt A, from an unpublished paper). Experiments that use prompt A need it.

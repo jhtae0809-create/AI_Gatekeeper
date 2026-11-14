@@ -5,4 +5,4 @@ A gatekeeper that decides whether an LLM prompt and answer record is safe to kee
 | Folder | What it holds |
 |---|---|
 | [experiments/](experiments/) | Test set, gate experiments and results. Start with [experiments/README.md](experiments/README.md); full write-up in [experiments/docs/code_walkthrough.md](experiments/docs/code_walkthrough.md) |
-| `mvp/` | A working demo (planned): speech to text, then the gate masks or blocks risky parts before the record is stored |
+| [mvp/](mvp/) | A working demo: a senior care companion whose gateway masks each record before it leaves the home; a stored record goes on the Sepolia blockchain once a person permits it. Start with [mvp/README.md](mvp/README.md) |

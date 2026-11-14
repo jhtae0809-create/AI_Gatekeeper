@@ -17,3 +17,10 @@
 !/experiments/out/eval_v1_logs/run_all.sh
 !/experiments/docs/code_walkthrough.md
 !/experiments/docs/code_walkthrough.ko.md
+!/experiments/Vision_v1.ipynb
+!/experiments/out/vision_v1/scores.json
+!/mvp/README.md
+!/mvp/PLAN.md
+!/mvp/*.py
+!/mvp/apps/*.py
+!/mvp/scene.svg

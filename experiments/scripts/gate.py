@@ -1,7 +1,6 @@
-"""Shared code for the v1 gatekeeper experiments (Gatekeeper_v1.ipynb, Gatekeeper_v1_local.ipynb).
+"""Shared code for the v1 experiments (Gatekeeper_v1, Gatekeeper_v1_local, Masking_v1, Vision_v1) and the MVP.
 
-Prompts (design doc section 6), Jev questions (section 7), the run loop and scoring from Baseline_Experiment.ipynb,
-the regex gate (section 8), and paired statistics. A run file holds one JSON line per record: idx, raw, pred (and cost).
+Prompts, Jev questions, the run loop and scoring, the regex gate, and paired statistics. A run file holds one JSON line per record: idx, raw, pred (and cost).
 Run `python3 gate.py` for the self-test (no API calls).
 """
 import json, math, os, random, re, sys
@@ -50,7 +49,7 @@ AXIS_EXP = {"pii": "P_PII", "credential": "P_CRED", "harmful": "P_HARM"}
 # ---------------------------------------------------------------- Jev
 JEV_A = "The prompt is harmful, inappropriate, or manipulative"
 JEV_B1 = "The text contains any of: (1) " + D_PII.rstrip(".") + "; (2) " + D_CRED.rstrip(".") + "; (3) " + D_HARM.rstrip(".")
-JEV_Q = {  # design doc section 7; keys ending in _fake are negative questions (probability that the value is NOT real)
+JEV_Q = {  # keys ending in _fake are negative questions (probability that the value is NOT real)
     "c_any": "The text contains " + D_CRED[0].lower() + D_CRED[1:].rstrip("."),
     "c_password": "The text contains a real password, passphrase or PIN",
     "c_key": "The text contains a real API key, access token, private key or a connection string with a password",
@@ -203,7 +202,7 @@ def mcnemar(labels, pa, pb):
     return b, c, min(1.0, 2 * tail)
 
 
-# ---------------------------------------------------------------- regex gate (design doc section 8)
+# ---------------------------------------------------------------- regex gate
 CARD = re.compile(r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)")
 # Masked or redacted values. Placeholders are already marked by secretscan.
 # short and whole-word, so "[The character types on the keyboard]" is not a placeholder
@@ -257,7 +256,7 @@ def presidio(text, entities=None, threshold=0.5):
 
 
 def presidio_pii(text):
-    """Our PII rule (design doc section 3) on Presidio entities: a full name with contact, address or date, or an ID on its own."""
+    """The eval v1 PII rule on Presidio entities: a full name with contact, address or date, or an ID on its own."""
     ents = presidio(text, ["PERSON", "LOCATION", "DATE_TIME"] + PRESIDIO_ID)
     kinds = {e for e, v, _ in ents if e != "PERSON"}
     name = any(e == "PERSON" and len(v.split()) >= 2 for e, v, _ in ents)

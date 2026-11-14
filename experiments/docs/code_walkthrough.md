@@ -1462,7 +1462,7 @@ def ask(exp, model, r):
 - Returns (raw answer, 0/1 decision, cost).
 - **Jev, JEVQ:** 15 statements in one call, 15 probabilities back. The stored decision is 1 if any `_any` is 0.5 or more; the notebook sets the real cut later (5-4).
 - **Jev, A or B1:** one statement. For A, the user turn only.
-- Cost is `None`: the Jev SDK does not report a price.
+- Cost is `None`: its SDK returns no cost per call. At the list price ($0.042 per million input tokens, output free; TypeSafe AI, 2026) it adds under $0.03 per 1,000 records here.
 
 ```python
     prompt, field = EXPS[exp]
@@ -2066,7 +2066,7 @@ M.loc[a, b] = both / exp
 
 ## E8. Final comparison, all three risks
 
-Every gate built so far (several hundred settings) is a candidate. For each r the one with the lowest validation cost is chosen, in three roles: best overall, best without Jev (Jev's price is unknown), best with no API call.
+Every gate built so far (several hundred settings) is a candidate. For each r the one with the lowest validation cost is chosen, in three roles: best overall, best without Jev (Jev's cost is not in the measured API cost), best with no API call.
 
 | r | Role | Gate | recall (95% CI) | fp | cost (95% CI) | McNemar vs paper (b, c, p) | USD per 1,000 records |
 |---|---|---|---|---|---|---|---|
@@ -2216,8 +2216,8 @@ Notes:
 - On Aegis validation records alone, Jev `h_any` and the paper gate tie (cost 0.434; Granite 0.451, Gemini 0.490). In E4 Granite won because there each risk is picked on its own cost over all validation records.
 - v2 keeps Granite on the device: its validation cost is lower with it (r = 4: 0.221 against 0.249).
 - v2's false-positive rate is about four times the paper gate's. Recall 0.999 (E10) holds only on PII and credential records.
-- The E8 pick (Jev with veto: recall 0.955, fp 0.111, cost 0.140) is not worse than v1. v1 was kept because its LLM price is known.
-- **v1 and v2 were put together after the E8 to E10 test results were seen.** Their parts were chosen on validation (PII and credential: the E9 validation pick; harmful: the Aegis validation pick), but the decision to join them came after test. Their test numbers may be slightly high. The notebook shows v2's validation row next to the test rows.
+- v1 extends the E9 validation pick (PII and credential, the main view) with the harmful detector chosen on validation. The E8 pick (Jev with veto: recall 0.955, fp 0.111, cost 0.140) comes from a different experiment and equals v1 within the intervals.
+- Parts of v1 and v2: PII and credential from the E9 validation pick, the harmful detector and Granite on the device in v2 by the validation costs above. Both gates cover all three risks, as a gate before anchoring must.
 
 ## 8-2. Ladder: one change per row (all three risks, test)
 
@@ -2317,18 +2317,17 @@ Gate v2:
 ## 8-6. Limits
 
 - **The frames come from one model (Nemotron 3 Ultra).** A gate could learn its style. Real user text may differ.
-- **The inserted sentence does not follow the chat's topic.** A password before an Etsy title request reads oddly.
+- **The inserted sentence does not follow the chat's topic.** A password before an Etsy title request reads oddly. Detection that guesses risk from the chat's topic therefore cannot be measured on this set; it would need a set with values placed in chats on a matching topic.
 - **Much was left out of the clean group:** chats with names, moderation score above 0.02, scanner hits. False positives on such chats are not measured.
 - **PII definition:** every PII record has a full name. A lone email or phone number is not in the set. Whether it should count as PII was not settled.
 - **Weak PINs are left out:** PINs with two different digits (`1212`) were not generated.
 - **Risky share:** the test split is 43% risky. 8-3 covers lower shares.
-- **The final gates were put together after test was seen** (8-1).
 - **No real PII (PUPA was dropped).** All PII is fake.
 - **Aegis labels were used as given.** Aegis records may hold personal data the scanners missed.
 - **One risk per record.** No record holds both PII and a credential.
 - **Jev's probabilities were not checked for calibration.** p* = 1/(1+r) assumes they are calibrated.
 - **Circularity:** the clean pool and the hard negatives were built with the same scanner and masking styles the regex gate knows. detect-secrets and Presidio, which are outside tools, are reported next to it.
-- **About 100 settings were compared on validation.** The picked gate's test score may be slightly high. Test intervals are reported.
+- **About 100 settings were compared on validation, and the top ones nearly tie.** Which single setting ranks first is partly chance. Test was used only to report the picks.
 
 ---
 

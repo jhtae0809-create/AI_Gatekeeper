@@ -1,9 +1,8 @@
 """Shared code for the v1 evaluation set. Used by build_eval_v1.ipynb (and `components` by Gatekeeper_v1.ipynb).
 
-Ported from pilot_set_v2.ipynb (record_text, insert, place, rec, b62, looks_live, the WildChat Step 1 filter)
-and extended for v1: six credential types, Faker identities for PII, masked and placeholder hard negatives,
+Six credential types, Faker identities for PII, masked and placeholder hard negatives,
 frames written by a free generator model, and a split grouped by pair, frame and WildChat conversation.
-Design: Dataset/docs/eval_v1_design.md. Run `python3 build_eval.py` for the self-test.
+Walkthrough: docs/code_walkthrough.md, Part 2. Run `python3 build_eval.py` for the self-test.
 """
 import collections, glob, hashlib, json, os, random, re, string, sys, zlib
 from datetime import date
