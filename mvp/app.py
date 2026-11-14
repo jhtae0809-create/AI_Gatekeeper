@@ -265,7 +265,7 @@ head.title(A.TITLE)
 head.caption("A gatekeeper decides what part of each record may leave the home. New here? Open **How it works**.")
 if btn.button("How it works", icon=":material/info:", width="stretch"):
     how()
-st.markdown(f'<img class="scene" src="data:image/svg+xml;base64,{SCENE}" alt="An older adult at home speaks to the companion; the gatekeeper on the home hub masks the phone number; only masked text leaves through the door to the AI model, family, the caregiver and, after a permit, the blockchain.">', unsafe_allow_html=True)
+st.markdown(f'<img class="scene" src="data:image/svg+xml;base64,{SCENE}" alt="An older adult at home speaks to the companion; the gatekeeper on the home hub masks the phone number; only masked text leaves through the door to the AI model, family, the caregiver and the blockchain.">', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- sidebar: inputs that need no typing
 with st.sidebar:
