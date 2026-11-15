@@ -11,6 +11,10 @@
 !/experiments/out/masking_v1/scores.json
 !/experiments/scripts/*.py
 !/experiments/data/frames_v1.jsonl
+!/experiments/data/README.md
+!/experiments/data/eval_v1.zip
+!/.github/secret_scanning.yml
+!/experiments/data/image_labels_v1.jsonl
 !/experiments/data/eval_v1_counts.json
 !/experiments/out/eval_v1_runs/scores_v1.json
 !/experiments/out/eval_v1_logs/misses.py

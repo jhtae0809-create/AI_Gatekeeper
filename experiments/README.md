@@ -34,6 +34,9 @@ Full write-up of every step, decision and result: [docs/code_walkthrough.md](doc
 | `scripts/masking.py` | Span finders, credential rules, AI check of the masks (shared with the MVP) |
 | `scripts/vision.py` | OCR (Tesseract, Apple Vision) in four orientations, orientation methods, QR boxes, photo blackout, label drafts, on-device flags and True/False questions for text and photos (shared with the MVP) |
 | `scripts/scan_wildchat.py` | Scans all of WildChat-1M; its secret hashes keep generated values away from real ones |
+| `data/README.md` | Data card: groups, fields, sources, licenses |
+| `data/eval_v1.zip` | The 3,500-record text set with labels and spans; unzip in `data/` to get `eval_v1.jsonl`, which the notebooks read |
+| `data/image_labels_v1.jsonl` | Labels for the 1,030 BIV-Priv-Seg images (images not included) |
 | `data/frames_v1.jsonl` | Generated message frames with empty slots (generator output, cached) |
 | `data/eval_v1_counts.json` | Build counts and checks |
 | `out/eval_v1_runs/scores_v1.json` | All result tables |
