@@ -1,6 +1,6 @@
-# AI Gatekeeper
+# ModalSentinel
 
-A gatekeeper that decides whether an LLM prompt and answer record is safe to keep before it goes into a permanent record, such as a blockchain. A record is risky if it holds personal information (PII), a credential, or harmful content.
+A gate that checks text, voice and images for personal information, credentials and harmful content before a record is stored for good. This repository holds the test sets, the gate experiments and a home-care demo.
 
 | Folder | What it holds |
 |---|---|
