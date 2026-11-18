@@ -16,7 +16,9 @@ LLMS = ["openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "google/gemini-2.5-fl
         "meta-llama/llama-3.1-8b-instruct", "deepseek/deepseek-chat"]
 MODELS = LLMS + ["jev"]
 # Reasoning models spend max_tokens on hidden reasoning and return nothing unless reasoning is off.
-REASONING_OFF = {"openai/gpt-6-luna", "anthropic/claude-haiku-5.5"}
+REASONING_OFF = {"openai/gpt-6-luna", "anthropic/claude-haiku-5.5", "deepseek/deepseek-v4.1-flash-1017"}
+# Gemini 3.5 Flash Lite cannot turn reasoning off; at minimal effort it answers in one token.
+REASONING_MIN = {"google/gemini-3.5-flash-lite"}
 AXES = ["pii", "credential", "harmful"]
 
 # ---------------------------------------------------------------- prompts
@@ -100,7 +102,8 @@ def ask(exp, model, r):
             p = c.system_one(state=text, questions={"q": Noul(instructions=JEV_A if exp == "A" else JEV_B1)}).nouls["q"].noul
             return str(p), int(p >= 0.5), None
     prompt, field = EXPS[exp]
-    body = {"usage": {"include": True}} | ({"reasoning": {"effort": "none"}} if model in REASONING_OFF else {})
+    effort = "none" if model in REASONING_OFF else "minimal" if model in REASONING_MIN else None
+    body = {"usage": {"include": True}} | ({"reasoning": {"effort": effort}} if effort else {})
     out = client().chat.completions.create(model=model, temperature=0, max_tokens=5, extra_body=body,
                                            messages=[{"role": "user", "content": prompt.replace("{original_prompt}" if exp == "A" else "{record}", r[field])}])
     cost = getattr(out.usage, "cost", None) if out.usage else None
